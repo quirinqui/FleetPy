@@ -76,6 +76,7 @@ def get_src_request_modules():
 def get_src_fleet_control_modules():
     # FleetPy fleet control options
     op_dict = {}  # str -> (module path, class name)
+    op_dict["IRSOnly"] = ("src.fleetctrl.IRSOnly", "InsertionHeuristicOnly")
     op_dict["PoolingIRSOnly"] = ("src.fleetctrl.PoolingIRSOnly", "PoolingInsertionHeuristicOnly")
     op_dict["PoolingIRSAssignmentBatchOptimization"] = ("src.fleetctrl.PoolingIRSBatchOptimization", "PoolingIRSAssignmentBatchOptimization")
     op_dict["RidePoolingBatchAssignmentFleetcontrol"] = ("src.fleetctrl.RidePoolingBatchAssignmentFleetcontrol", "RidePoolingBatchAssignmentFleetcontrol")
