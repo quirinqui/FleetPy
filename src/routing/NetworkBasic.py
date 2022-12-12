@@ -37,7 +37,7 @@ LOG = logging.getLogger(__name__)
 # import imports.Router as Router
 
 INPUT_PARAMETERS_NetworkBasic = {
-    "doc" : "this routing class does all routing computations based on dijkstras algorithm",
+    "doc" : "this routing class does all routing rcomputations based on dijkstas algorithm",
     "inherit" : "NetworkBase",
     "input_parameters_mandatory": [G_NETWORK_NAME],
     "input_parameters_optional": [G_NW_DYNAMIC_F],

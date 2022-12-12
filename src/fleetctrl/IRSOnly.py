@@ -2,10 +2,10 @@ import logging
 import time
 
 from src.simulation.Offers import TravellerOffer
-from src.fleetctrl.CustomFleetControlBase import CustomFleetControlBase
+from src.fleetctrl.FleetControlBase import FleetControlBase
 from src.fleetctrl.planning.PlanRequest import PlanRequest
-from src.fleetctrl.pooling.objectives import return_pooling_objective_function
-from src.fleetctrl.pooling.immediate.insertion import insertion_with_heuristics
+from src.fleetctrl.no_pooling.objectives import return_objective_function
+from src.fleetctrl.no_pooling.immediate.insertion import insertion_with_heuristics
 from src.misc.globals import *
 
 LOG = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ INPUT_PARAMETERS_InsertionHeuristicOnly = {
     "optional_modules": []
 }
 
-class InsertionHeuristicOnly(CustomFleetControlBase):
+class InsertionHeuristicOnly(FleetControlBase):
     """This class applies an Insertion Heuristic, in which new requests are inserted in the currently assigned
     vehicle plans and the insertion with the best control objective value is selected.
 
@@ -56,8 +56,7 @@ class InsertionHeuristicOnly(CustomFleetControlBase):
         # TODO # make standard in FleetControlBase
         self.rid_to_assigned_vid = {} # rid -> vid
         self.pos_veh_dict = {}  # pos -> list_veh
-        # self.vr_ctrl_f = return_pooling_objective_function(operator_attributes[G_OP_VR_CTRL_F])
-        self.vr.ctrl_f = None
+        self.vr_ctrl_f = return_objective_function(operator_attributes[G_OP_VR_CTRL_F])
         self.sim_time = scenario_parameters[G_SIM_START_TIME]
         # others # TODO # standardize IRS assignment memory?
         self.tmp_assignment = {}  # rid -> VehiclePlan
