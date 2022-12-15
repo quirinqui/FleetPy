@@ -18,8 +18,8 @@ def veh_search_for_immediate_request(sim_time, prq, fleetctrl, list_excluded_vid
         veh_locations_to_vid = {}
         for vid, veh_obj in enumerate(fleetctrl.sim_vehicles):
             # do not consider inactive vehicles
-            # TODO ONLY Consider Waiting Vehicles
-            if veh_obj.status.value != 0 or vid in list_excluded_vids:
+            # TODO ONLY consider IDLE vehicles
+            if veh_obj.status.value == 5 or vid in list_excluded_vids or len(veh_obj.pax) > 0:
                 continue
             try:
                 veh_locations_to_vid[veh_obj.pos].append(vid)
@@ -88,7 +88,7 @@ def veh_search_for_reservation_request(sim_time, prq, fleetctrl, list_excluded_v
     pos_to_vid_time = {}  # pos -> {}: vid -> (delta_t, later_stops_flag)
     for vid, veh_obj in enumerate(fleetctrl.sim_vehicles):
         # do not consider inactive vehicles
-        if veh_obj.status.value != 0 or vid in list_excluded_vid:
+        if veh_obj.status.value == 5 or vid in list_excluded_vid:
             continue
         # only use currently assigned vehicle plan, create a flag whether the stop is the latest considered stop
         if veh_plans is None:
