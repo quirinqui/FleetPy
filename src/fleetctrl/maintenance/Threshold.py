@@ -21,7 +21,7 @@ class MaintenanceThresholdPublicInfrastructure(MaintenanceBase):
         is_maintenance_required = False
         last_time = sim_time
         last_pos = veh_obj.pos
-        last_clean = veh_obj.clean
+        last_clean = veh_obj.cleanliness
         #TODO calibration value
 
         # does the current vehicle haves planed routes?

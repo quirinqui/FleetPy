@@ -756,7 +756,7 @@ class VehiclePlan:
         :return: dictionary specifying the future vehicle state"""
         c_pos = veh_obj.pos
         c_soc = veh_obj.soc
-        c_clean = veh_obj.clean
+        c_clean = veh_obj.cleanliness
         c_time = sim_time
         if self.list_plan_stops[0].is_locked():  # set time at start_time of boarding process
             boarding_startet = self.list_plan_stops[0].get_started_at()

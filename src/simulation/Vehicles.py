@@ -54,7 +54,7 @@ class SimulationVehicle:
         self.status = VRL_STATES.IDLE
         self.pos = None
         self.soc = None
-        self.clean = None
+        self.cleanliness = None
         self.pax = []  # rq_obj
         # assigned route = list of assigned vehicle legs
         self.assigned_route: tp.List[VehicleRouteLeg] = []
@@ -106,7 +106,7 @@ class SimulationVehicle:
         self.status = VRL_STATES.IDLE
         self.pos = routing_engine.return_node_position(state_dict[G_V_INIT_NODE])
         self.soc = state_dict[G_V_INIT_SOC]
-        self.clean = state_dict[G_V_INIT_CLEAN]
+        self.cleanliness = state_dict[G_V_INIT_CLEAN]
         if veh_init_blocking:
             final_time = state_dict[G_V_INIT_TIME]
             if final_time > start_time:
@@ -492,7 +492,7 @@ class SimulationVehicle:
 
     def compute_new_cleanliness(self, passenger_dirtyness):
 
-        self.clean -= passenger_dirtyness
+        self.cleanliness -= passenger_dirtyness
 
     def compute_cleaning(self, maintenance_speed, duration):
         """This method returns the SOC change for charging a certain amount of power for a given duration.
@@ -501,7 +501,7 @@ class SimulationVehicle:
         :type maintenance_speed: float
         :param duration: duration of maintenance process in seconds(!)
         :type duration: float
-        :return: delta clean
+        :return: delta cleanliness
         :rtype: float
         """
 
