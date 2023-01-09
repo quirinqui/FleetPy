@@ -53,12 +53,11 @@ class MaintenanceSpot:
         return f"maintenance spot id: {self.id}, attached vehicle {vehicle}"
 
 
-    #TODO Q change method to maintenance
     @property
     def cleaned_amount(self):
         cleaned_amount_calc = 0
         if self.attached_vehicle is not None:
-            cleaned_amount_calc = (self.attached_vehicle.cleanliness - self.initial_cleanliness) * self.attached_vehicle.battery_size
+            cleaned_amount_calc = (self.attached_vehicle.cleanliness - self.initial_cleanliness)
         return cleaned_amount_calc
 
     def attach(self, sim_time, vehicle: SimulationVehicle):
@@ -83,14 +82,12 @@ class MaintenanceSpot:
         self.initial_cleanliness = None
         self.connect_time = None
 
-    #TODO Q change to maintenance
     def clean_vehicle(self, delta_time):
         """ Linear cleaning of the attached vehicle
 
         :param delta_time: the time increment in seconds
         """
-        delta_power = self.maintenance_speed * delta_time / 3600
-        delta_cleanliness = delta_power / self.attached_vehicle.battery_size
+        delta_cleanliness = self.maintenance_speed * delta_time / 3600
         self.attached_vehicle.cleanliness = min(1.0, self.attached_vehicle.cleanliness + delta_cleanliness)
 
     def calculate_maintenance_duration(self, veh_object: SimulationVehicle, start_cleanliness, end_cleanliness) -> float:
@@ -101,8 +98,8 @@ class MaintenanceSpot:
         :param end_cleanliness:         The final cleanliness upto which the vehicle should be cleaned.
         """
         start_cleanliness = veh_object.cleanliness if start_cleanliness is None else start_cleanliness
-        remaining_battery = (end_cleanliness - start_cleanliness) * veh_object.battery_size
-        return remaining_battery / self.maintenance_speed * 3600
+        remaining_maintenance = (end_cleanliness - start_cleanliness)
+        return remaining_maintenance / self.maintenance_speed * 3600
 
 
 class MaintenanceStation:
