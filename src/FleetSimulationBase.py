@@ -609,9 +609,11 @@ class FleetSimulationBase:
                 # # record user stats at end of alighting process
                 self.demand.user_ends_alighting(rid, vid, op_id, alighting_end_time)
                 self.operators[op_id].acknowledge_alighting(rid, vid, alighting_end_time)
-                LOG.debug(f"Reduce cleanliness! From {veh_obj.cleanliness} -> {veh_obj.cleanliness-0.1}")
+
+                # this function call reduces the cleanliness of a vehicle after a successfull alighting process
                 veh_obj.compute_new_cleanliness(0.1)
-                LOG.debug(f"New Cleanliness computed: {veh_obj.cleanliness}")
+                LOG.debug(f"New reduced cleanliness computed: {veh_obj.cleanliness}")
+
             # send update to operator
             if len(boarding_requests) > 0 or len(dict_start_alighting) > 0:
                 self.operators[op_id].receive_status_update(vid, next_time, passed_VRL, True)
