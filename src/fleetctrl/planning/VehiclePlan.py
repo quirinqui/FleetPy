@@ -130,6 +130,11 @@ class PlanStopBase(metaclass=ABCMeta):
     def get_planned_arrival_and_departure_soc(self) -> Tuple[float, float]:
         """returns the planned soc when arriving at plan stop
         :return: planned soc at start and end of charging process"""
+
+    @abstractmethod
+    def get_planned_arrival_and_departure_clean(self) -> Tuple[float, float]:
+        """returns the planned soc when arriving at plan stop
+        :return: planned soc at start and end of charging process"""
     
     @abstractmethod
     def is_locked(self) -> bool:
@@ -211,6 +216,7 @@ class PlanStopBase(metaclass=ABCMeta):
         """
         pass
 
+
 class PlanStop(PlanStopBase):
     """this class corresponds to one spatiotemporal action a vehicle is planned to do during a vehicle plan
         a vehicle plan thereby consists of an temporal ordered list of PlanStops which are performed one after another
@@ -287,6 +293,8 @@ class PlanStop(PlanStopBase):
         self._planned_departure_time = None
         self._planned_arrival_soc = None
         self._planned_departure_soc = None
+        self._planned_arrival_clean = None
+        self._planned_departure_clean = None
 
         self.started_at = None  # is only set in update_plan
         self.infeasible_locked = False
@@ -330,6 +338,8 @@ class PlanStop(PlanStopBase):
         cp_ps._planned_departure_time = self._planned_departure_time
         cp_ps._planned_arrival_soc = self._planned_arrival_soc
         cp_ps._planned_departure_soc = self._planned_departure_soc
+        cp_ps._planned_arrival_clean = self._planned_arrival_clean
+        cp_ps._planned_departure_clean = self._planned_departure_clean
         cp_ps.started_at = self.started_at
         return cp_ps
 
@@ -407,6 +417,9 @@ class PlanStop(PlanStopBase):
     def get_planned_arrival_and_departure_soc(self) -> Tuple[float, float]:
         return self._planned_arrival_soc, self._planned_departure_soc
 
+    def get_planned_arrival_and_departure_clean(self) -> Tuple[float, float]:
+        return self._planned_arrival_clean, self._planned_departure_clean
+
     def is_inactive(self) -> bool:
         """ this function evaluates if this is an inactive PlanStop (i.e. undefined duration and no tasks)
         :return: (bool) True if inactive, else False """
@@ -436,6 +449,10 @@ class PlanStop(PlanStopBase):
     def set_planned_arrival_and_departure_soc(self, arrival_soc: float, departure_soc: float):
         self._planned_arrival_soc = arrival_soc
         self._planned_departure_soc = departure_soc
+
+    def set_planned_arrival_and_departure_clean(self, arrival_clean: float, departure_clean: float):
+        self._planned_arrival_clean = arrival_clean
+        self._planned_departure_clean = departure_clean
         
     def set_planned_arrival_and_departure_time(self, arrival_time: float, departure_time: float):
         self._planned_arrival_time = arrival_time
@@ -532,6 +549,9 @@ class ChargingPlanStop(PlanStop):
                          earliest_start_time=earliest_start_time, latest_start_time=latest_start_time, duration=duration, 
                          earliest_end_time=earliest_end_time, locked=locked, locked_end=locked_end, charging_power=charging_power, 
                          planstop_state=G_PLANSTOP_STATES.CHARGING, charging_task_id=charging_task_id, status=status)
+
+class MaintenancePlanStop(PlanStop):
+    """ this plan stop can be used to schedule a maintenance only process """
 
 class VehiclePlan:
     """ this class is used to plan tasks for a vehicle and evaluates feasiblity of time constraints of this plan
@@ -736,6 +756,7 @@ class VehiclePlan:
         :return: dictionary specifying the future vehicle state"""
         c_pos = veh_obj.pos
         c_soc = veh_obj.soc
+        c_clean = veh_obj.clean
         c_time = sim_time
         if self.list_plan_stops[0].is_locked():  # set time at start_time of boarding process
             boarding_startet = self.list_plan_stops[0].get_started_at()
@@ -759,6 +780,7 @@ class VehiclePlan:
             if c_pos == pstop.get_pos():
                 last_c_time = c_time
                 last_c_soc = c_soc
+                last_c_clean = c_clean
 
                 earliest_time = pstop.get_earliest_start_time()
                 if c_time < earliest_time:
@@ -787,7 +809,12 @@ class VehiclePlan:
                     c_soc += veh_obj.compute_soc_charging(pstop.get_charging_power(), c_time - last_c_time)
                     c_soc = max(c_soc, 1.0)
                 pstop.set_planned_arrival_and_departure_soc(last_c_soc, c_soc)
-                    
+
+           #     if pstop.get_maintenance_speed() > 0:
+            #        c_clean += veh_obj.compute_soc_charging()
+             #       c_clean = max(c_soc, 1.0)
+              #  pstop.set_planned_arrival_and_departure_clean(last_c_clean, c_clean)
+
         return {"stop_index": stop_index, "c_pos": c_pos, "c_soc": c_soc, "c_time": c_time, "c_pax": c_pax,
                 "pax_info": self.pax_info.copy(), "c_nr_pax": nr_pax, "c_nr_parcels" : nr_parcels}
 

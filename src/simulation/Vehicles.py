@@ -49,10 +49,12 @@ class SimulationVehicle:
         self.battery_size = float(veh_data[G_VTYPE_BATTERY_SIZE])
         self.range = float(veh_data[G_VTYPE_RANGE])
         self.soc_per_m = 1/(self.range*1000)
+        self.passenger_dirtiness = 0
         # current info
         self.status = VRL_STATES.IDLE
         self.pos = None
         self.soc = None
+        self.clean = None
         self.pax = []  # rq_obj
         # assigned route = list of assigned vehicle legs
         self.assigned_route: tp.List[VehicleRouteLeg] = []
@@ -104,6 +106,7 @@ class SimulationVehicle:
         self.status = VRL_STATES.IDLE
         self.pos = routing_engine.return_node_position(state_dict[G_V_INIT_NODE])
         self.soc = state_dict[G_V_INIT_SOC]
+        self.clean = state_dict[G_V_INIT_CLEAN]
         if veh_init_blocking:
             final_time = state_dict[G_V_INIT_TIME]
             if final_time > start_time:
@@ -486,6 +489,24 @@ class SimulationVehicle:
         :rtype: float
         """
         return power * duration / (self.battery_size * 3600)
+
+    def compute_new_cleanliness(self, passenger_dirtyness):
+
+        self.clean -= passenger_dirtyness
+
+    def compute_cleaning(self, maintenance_speed, duration):
+        """This method returns the SOC change for charging a certain amount of power for a given duration.
+
+        :param maintenance_speed: speed
+        :type maintenance_speed: float
+        :param duration: duration of maintenance process in seconds(!)
+        :type duration: float
+        :return: delta clean
+        :rtype: float
+        """
+
+        #TODO how to compute cleaning
+        return maintenance_speed * duration / (self.battery_size * 3600)
 
     def get_charging_duration(self, power, init_soc, final_soc=1.0):
         """This method computes the charging duration required to charge the vehicle from init_soc to final_soc.

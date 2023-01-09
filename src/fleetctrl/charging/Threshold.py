@@ -9,10 +9,10 @@ LOG = logging.getLogger(__name__)
 
 
 class ChargingThresholdPublicInfrastructure(ChargingBase):
-    """ this strategy looks through all fleet vehicles an triggers charging tasks in case the soc within a planned route
+    """ this strategy looks through all fleet vehicles and triggers charging tasks in case the soc within a planned route
     of a vehicle drops below a threshold (G_OP_APS_SOC)
     the closest charging station possible from this position is considered for charging
-    in case multiple charging operators are present, the offer closest to postion is selected (also with depots)"""
+    in case multiple charging operators are present, the offer closest to position is selected (also with depots)"""
     def __init__(self, fleetctrl, operator_attributes, solver="Gurobi"):
         super().__init__(fleetctrl, operator_attributes, solver=solver)
         self.soc_threshold = operator_attributes.get(G_OP_APS_SOC, 0.1)

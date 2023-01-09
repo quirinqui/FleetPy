@@ -506,6 +506,7 @@ class FleetSimulationBase:
                     init_state_info[G_V_INIT_NODE] = init_node# np.random.choice(init_node)
                     init_state_info[G_V_INIT_TIME] = self.scenario_parameters[G_SIM_START_TIME]
                     init_state_info[G_V_INIT_SOC] = 0.5 * (1 + np.random.random())
+                    init_state_info[G_V_INIT_CLEAN] = 1
                     veh_obj.set_initial_state(op_fleetctrl, self.routing_engine, init_state_info,
                                                 self.scenario_parameters[G_SIM_START_TIME], self.init_blocking)
 
@@ -608,6 +609,9 @@ class FleetSimulationBase:
                 # # record user stats at end of alighting process
                 self.demand.user_ends_alighting(rid, vid, op_id, alighting_end_time)
                 self.operators[op_id].acknowledge_alighting(rid, vid, alighting_end_time)
+                LOG.debug(f"Reduce cleanliness! From {veh_obj.clean} -> {veh_obj.clean-0.1}")
+                veh_obj.compute_new_cleanliness(0.1)
+                LOG.debug(f"New Cleanliness computed: {veh_obj.clean}")
             # send update to operator
             if len(boarding_requests) > 0 or len(dict_start_alighting) > 0:
                 self.operators[op_id].receive_status_update(vid, next_time, passed_VRL, True)

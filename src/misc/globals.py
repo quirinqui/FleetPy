@@ -508,6 +508,7 @@ G_V_TYPE = "vehicle_type"
 G_V_INIT_NODE = "final_node_index"
 G_V_INIT_TIME = "final_time"
 G_V_INIT_SOC = "final_soc"
+G_V_INIT_CLEAN = "final_clean"
 
 # Vehicle Status
 # --------------
@@ -526,6 +527,8 @@ class VRL_STATES(Enum):
     TO_CHARGE = (12, "to_charge")
     TO_DEPOT = (13, "to_depot")
     TO_RESERVATION = (14, "to_reservation")
+    MAINTENANCE = (15, "maintenance")
+    TO_MAINTENANCE = (16, "to_maintenance")
 
     @DynamicClassAttribute
     def value(self):
@@ -540,11 +543,12 @@ class VRL_STATES(Enum):
         # print("WARNING: G_VEHICLE_STATUS_DICT is still accessed! (misc.globals)")
         return {status.value: status.display_name for status in VRL_STATES}
 
-G_DRIVING_STATUS = [VRL_STATES.ROUTE, VRL_STATES.REPOSITION, VRL_STATES.TO_CHARGE, VRL_STATES.TO_DEPOT, VRL_STATES.TO_RESERVATION] # [10,11,12,13]
-G_REVENUE_STATUS = [VRL_STATES.BOARDING, VRL_STATES.WAITING, VRL_STATES.ROUTE, VRL_STATES.REPOSITION] # [1, 4, 10, 11]
-G_LAZY_STATUS = [VRL_STATES.WAITING] # [4]     # VRLs not actively planned and dont do anything (i.e. waiting)
-G_LOCK_DURATION_STATUS = [VRL_STATES.BLOCKED_INIT, VRL_STATES.BOARDING, VRL_STATES.BOARDING_WITH_CHARGING] # [-1, 1, 3]
-G_INACTIVE_STATUS = [VRL_STATES.OUT_OF_SERVICE, VRL_STATES.TO_DEPOT, VRL_STATES.CHARGING, VRL_STATES.TO_CHARGE]
+
+G_DRIVING_STATUS = [VRL_STATES.ROUTE, VRL_STATES.REPOSITION, VRL_STATES.TO_CHARGE, VRL_STATES.TO_DEPOT, VRL_STATES.TO_RESERVATION, VRL_STATES.TO_MAINTENANCE]  # [10,11,12,13,16]
+G_REVENUE_STATUS = [VRL_STATES.BOARDING, VRL_STATES.WAITING, VRL_STATES.ROUTE, VRL_STATES.REPOSITION]  # [1, 4, 10, 11]
+G_LAZY_STATUS = [VRL_STATES.WAITING]  # [4]     # VRLs not actively planned and don't do anything (i.e. waiting)
+G_LOCK_DURATION_STATUS = [VRL_STATES.BLOCKED_INIT, VRL_STATES.BOARDING, VRL_STATES.BOARDING_WITH_CHARGING]  # [-1, 1, 3]
+G_INACTIVE_STATUS = [VRL_STATES.OUT_OF_SERVICE, VRL_STATES.TO_DEPOT, VRL_STATES.CHARGING, VRL_STATES.TO_CHARGE, VRL_STATES.MAINTENANCE, VRL_STATES.TO_MAINTENANCE]
 
 # TODO # after ISTTT: define all vehicle states
 
@@ -569,7 +573,7 @@ G_VR_REPLAY_ROUTE = "trajectory"
 G_VR_TOLL = "toll"
 G_VR_CHARGING_UNIT = "charging_unit"
 G_VR_CHARGING_POWER = "charging_power"
-
+G_VR_CLEANLINESS = "cleanliness"
 # Vehicle Type
 # ------------
 G_VTYPE_NAME = "vtype_name_full"
