@@ -238,6 +238,12 @@ G_OP_MIN_SOC_CHARGE_PUBLIC = "op_min_soc_public_station"    # Minimum soc limit 
 G_OP_MAX_DURATION_HOURS = "op_max_charging_duration_hours"           # List of pairs (start_time, end_time) when the max durations are applied
 G_OP_STATIONS_MAX_DURATIONS = "op_max_charging_durations"            # max allowed charging durations at stations corresponding to applicable hours in G_OP_MAX_DURATION_HOURS
 
+# Maintenance
+G_OP_CLEAN_M = "op_cleaning_method"
+G_OP_APS_CLEAN = "op_min_cleanliness_after_planstop"
+G_PUBLIC_CLEANING_FILE = "op_cleaning_stations_file"
+G_OP_MIN_SOC_CLEAN_PUBLIC = "op_min_cleanliness_public_station"    # Minimum soc limit after which a EV must visit charging station
+
 # Broker / Multi-Operator parameters
 G_MULTIOP_PREF_OP_RSEED = "multiop_preferred_operator_random_seed"
 G_MULTIOP_PREF_OP_PROB = "op_multiop_preferred_operator_probabilities"
@@ -620,6 +626,7 @@ G_PRQS_IN_VEH = 5
 G_FCTRL_CT_RQU = "user_requests"
 G_FCTRL_CT_RQB = "request_batch"
 G_FCTRL_CT_CH = "charging_strategy"
+G_FCTRL_CT_MAIN = "maintenance_strategy"
 G_FCTRL_CT_REPO = "repositioning_strategy"
 G_FCTRL_CT_DP = "dyn_pricing_strategy"
 G_FCTRL_CT_DFS = "dyn_fleetsizing_strategy"

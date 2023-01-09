@@ -18,6 +18,7 @@ from src.simulation.Offers import Rejection, TravellerOffer
 from src.simulation.Legs import VehicleRouteLeg  # ,VehicleChargeLeg
 
 from src.fleetctrl.charging.ChargingBase import ChargingBase  # ,VehicleChargeLeg
+from src.fleetctrl.maintenance.MaintenanceBase import MaintenanceBase
 from src.fleetctrl.planning.VehiclePlan import VehiclePlan, RoutingTargetPlanStop
 from src.fleetctrl.planning.PlanRequest import PlanRequest
 from src.fleetctrl.repositioning.RepositioningBase import RepositioningBase
@@ -27,13 +28,15 @@ from src.fleetctrl.reservation.ReservationBase import ReservationBase
 from src.demand.TravelerModels import RequestBase
 
 from src.misc.init_modules import load_repositioning_strategy, load_charging_strategy, \
-    load_dynamic_fleet_sizing_strategy, load_dynamic_pricing_strategy, load_reservation_strategy
+    load_dynamic_fleet_sizing_strategy, load_dynamic_pricing_strategy, load_reservation_strategy, \
+    load_maintenance_strategy
 from src.fleetctrl.pooling.GeneralPoolingFunctions import get_assigned_rids_from_vehplan
 if TYPE_CHECKING:
     from src.routing.NetworkBase import NetworkBase
     from src.simulation.Vehicles import SimulationVehicle
     from src.infra.Zoning import ZoneSystem
     from src.infra.ChargingInfrastructure import OperatorChargingAndDepotInfrastructure, PublicChargingInfrastructureOperator
+    from src.infra.MaintenanceInfrastructure import PublicMaintenanceInfrastructureOperator
     from src.simulation.StationaryProcess import ChargingProcess
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -64,7 +67,8 @@ class FleetControlBase(metaclass=ABCMeta):
     def __init__(self, op_id : int, operator_attributes : Dict, list_vehicles : List[SimulationVehicle],
                  routing_engine : NetworkBase, zone_system : ZoneSystem, scenario_parameters : Dict,
                  dir_names : Dict, op_charge_depot_infra : OperatorChargingAndDepotInfrastructure=None,
-                 list_pub_charging_infra: List[PublicChargingInfrastructureOperator]= []):
+                 list_pub_charging_infra: List[PublicChargingInfrastructureOperator]= [],
+                 list_pub_maintenance_infra: List[PublicMaintenanceInfrastructureOperator] = []):
         """The general attributes for the fleet control module are initialized. Strategy specific attributes are
         introduced in the children classes.
 
@@ -213,6 +217,23 @@ class FleetControlBase(metaclass=ABCMeta):
             prt_strategy_str += "\t Charging: None\n"
         self._active_charging_processes: Dict[Tuple[int, str], ChargingProcess] = {}     # charging task id (ch_op_id, booking_id) -> charging process
         self._vid_to_assigned_charging_process: Dict[int, Tuple[int, str]] = {}      # vehicle id -> charging task id
+
+        # maintenance management and strategy
+        # --------------------------------
+        self.min_aps_clean = operator_attributes.get(G_OP_APS_CLEAN, 0.1)
+        # TODO # init available charging operators
+        self.list_pub_maintenance_infra = list_pub_maintenance_infra
+        maintenance_method = operator_attributes.get(G_OP_CLEAN_M)
+        if maintenance_method is not None:
+            MaintenanceClass = load_maintenance_strategy(maintenance_method)
+            self.maintenance_strategy: MaintenanceBase = MaintenanceClass(self, operator_attributes)
+            prt_strategy_str += f"\t Maintenance: {self.maintenance_strategy.__class__.__name__}\n"
+            self._init_dynamic_fleetcontrol_output_key(G_FCTRL_CT_MAIN)
+        else:
+            self.maintenance_strategy = None
+            prt_strategy_str += "\t Maintenance: None\n"
+        self._active_maintenance_processes: Dict[Tuple[int, str], MaintenanceProcess] = {}  # Maintenance task id (ch_op_id, booking_id) -> Maintenance process
+        self._vid_to_assigned_maintenance_process: Dict[int, Tuple[int, str]] = {}  # vehicle id -> maintenance task id
 
         # on-street parking
         # -----------------
@@ -766,6 +787,13 @@ class FleetControlBase(metaclass=ABCMeta):
         # ---------------------------------------------------------
         if not self.allow_on_street_parking:
             self.charging_management.move_idle_vehicles_to_nearest_depots(sim_time, self)
+
+        # 6) Maintenance Processes
+        # ---------------------
+        # if self.maintenance_strategy:
+        #     t0 = time.perf_counter()
+        #     self.charging_strategy.time_triggered_charging_processes(sim_time)
+        #     add_dyn_dict[G_FCTRL_CT_CH] = round(time.perf_counter() - t0, 3)
 
         # record
         if add_dyn_dict:

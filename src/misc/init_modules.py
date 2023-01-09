@@ -113,6 +113,16 @@ def get_src_charging_strategies():
         cs_dict.update(dev_cs_dict)
     return cs_dict
 
+def get_src_maintenance_strategies():
+    # FleetPy maintenance options
+    cs_dict = {}  # str -> (module path, class name)
+    cs_dict["Threshold_PMI"] = ("src.fleetctrl.maintenance.Threshold", "MaintenanceThresholdPublicInfrastructure")
+    # add development content
+    if dev_content is not None:
+        dev_cs_dict = dev_content.add_maintenance_strategy_modules()
+        cs_dict.update(dev_cs_dict)
+    return cs_dict
+
 def get_src_dynamic_pricing_strategies():
     # FleetPy dynamic pricing options
     dp_dict = {}  # str -> (module path, class name)
@@ -235,6 +245,19 @@ def load_charging_strategy(op_charging_class_string):
     cs_dict = get_src_charging_strategies()
     # get charging strategy class
     return load_module(cs_dict, op_charging_class_string, "Charging strategy module")
+
+
+def load_maintenance_strategy(op_maintenance_class_string):
+    """This function chooses the maintenance strategy module that should be loaded.
+
+    :param op_maintenance_class_string: string that determines which charging strategy will be used
+    :return: Charging class
+    """
+    # FleetPy maintenance options
+    cs_dict = get_src_maintenance_strategies()
+    # get maintenance strategy class
+    return load_module(cs_dict, op_maintenance_class_string, "Maintenance strategy module")
+
 
 
 def load_dynamic_pricing_strategy(op_pricing_class_string):

@@ -107,3 +107,46 @@ class ChargingProcess(StationaryProcess):
     def update_state(self, delta_time):
         assert self.veh.status is VRL_STATES.CHARGING
         self.station.update_charging_state(self, delta_time)
+
+
+class MaintenanceProcess(StationaryProcess):
+    #TODO Q implement Maintenance Station in MaintenanceInfrastrucure.py
+    def __init__(self, booking_id:str, veh_obj: SimulationVehicle, station: MaintenanceStation, start_time, end_time=None):
+        self.id: str = booking_id
+        self.veh: SimulationVehicle = veh_obj
+        self.start_time = start_time
+        self.end_time = end_time
+        self.station: MaintenanceStation = station
+        self.socket_id: int = int(booking_id.split("_")[1])
+        self.locked: bool = False
+        self._task_started = False
+
+    def __str__(self) -> str:
+        return f"maintenance process: id {self.id} vid {self.veh.vid} station {self.station.id} socked {self.socket_id} start time {self.start_time} end time {self.end_time} started {self._task_started}"
+
+    def start_task(self, sim_time):
+        """ Connects the vehicle to the socket and returns true for successful connection """
+        self._task_started = self.station.start_maintenance_process(sim_time, self)
+        assert self._task_started is True, "failed to connect to the socket"
+        return self._task_started
+
+    def end_task(self, sim_time):
+        """ Ends the current task by disconnecting the vehicle """
+        assert self._task_started is True
+        self.station.end_maintenance_process(sim_time, self)
+
+    def get_scheduled_start_end_times(self):
+        return self.start_time, self.end_time
+
+    def remaining_time_to_start(self, sim_time):
+        return self.start_time - sim_time
+
+    def remaining_duration_to_finish(self, sim_time):
+        if self._task_started is None:
+            return None
+        else:
+            return self.station.remaining_maintenance_time(sim_time, self.veh.vid)
+
+    def update_state(self, delta_time):
+        assert self.veh.status is VRL_STATES.MAINTENANCE
+        self.station.update_maintenance_state(self, delta_time)
