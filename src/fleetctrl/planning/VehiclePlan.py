@@ -777,6 +777,8 @@ class VehiclePlan:
                 c_pos = pstop.get_pos()
                 c_time += tt
                 c_soc -= veh_obj.compute_soc_consumption(tdist)
+                if pstop.get_list_alighting_rids() != 0:
+                    c_clean -= 0.1
             if c_pos == pstop.get_pos():
                 last_c_time = c_time
                 last_c_soc = c_soc
@@ -809,6 +811,9 @@ class VehiclePlan:
                     c_soc += veh_obj.compute_soc_charging(pstop.get_charging_power(), c_time - last_c_time)
                     c_soc = max(c_soc, 1.0)
                 pstop.set_planned_arrival_and_departure_soc(last_c_soc, c_soc)
+
+                # TODO Q find appropriate clean calculation after trips
+                # pstop.set_planned_arrival_and_departure_clean(last_c_clean,)
 
            #     if pstop.get_maintenance_speed() > 0:
             #        c_clean += veh_obj.compute_soc_charging()

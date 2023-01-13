@@ -13,6 +13,7 @@ from typing import Optional, TYPE_CHECKING
 # -----------
 if TYPE_CHECKING:
     from src.infra.ChargingInfrastructure import ChargingStation
+    from src.infra.MaintenanceInfrastructure import MaintenanceStation
     from src.simulation.Vehicles import SimulationVehicle
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -110,22 +111,21 @@ class ChargingProcess(StationaryProcess):
 
 
 class MaintenanceProcess(StationaryProcess):
-    #TODO Q implement Maintenance Station in MaintenanceInfrastrucure.py
     def __init__(self, booking_id:str, veh_obj: SimulationVehicle, station: MaintenanceStation, start_time, end_time=None):
         self.id: str = booking_id
         self.veh: SimulationVehicle = veh_obj
         self.start_time = start_time
         self.end_time = end_time
         self.station: MaintenanceStation = station
-        self.socket_id: int = int(booking_id.split("_")[1])
+        self.spot_id: int = int(booking_id.split("_")[1])
         self.locked: bool = False
         self._task_started = False
 
     def __str__(self) -> str:
-        return f"maintenance process: id {self.id} vid {self.veh.vid} station {self.station.id} socked {self.socket_id} start time {self.start_time} end time {self.end_time} started {self._task_started}"
+        return f"maintenance process: id {self.id} vid {self.veh.vid} station {self.station.id} spot {self.spot_id} start time {self.start_time} end time {self.end_time} started {self._task_started}"
 
     def start_task(self, sim_time):
-        """ Connects the vehicle to the socket and returns true for successful connection """
+        """ Connects the vehicle to the spot and returns true for successful connection """
         self._task_started = self.station.start_maintenance_process(sim_time, self)
         assert self._task_started is True, "failed to connect to the socket"
         return self._task_started

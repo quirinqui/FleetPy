@@ -148,6 +148,9 @@ G_OP_FC_SUPPLY = "op_supply_fc_type"
 G_OP_DEPOT_F = "op_depot_file"
 G_OP_CH_N_STATION_QUERY = "op_n_charge_station_query"   # max number of stations to query charge offers from
 G_OP_CH_N_OFFER_P_ST_QUERY = "op_n_charge_offer_per_station"    # max number of offers per station
+# maintenance
+G_OP_CLEAN_N_STATION_QUERY = "op_n_maintenance_station_query"   # max number of stations to query maintenance offers from
+G_OP_CLEAN_N_OFFER_P_ST_QUERY = "op_n_maintenance_offer_per_station"    # max number of offers per station
 #parcel constraints
 G_OP_PA_EPT = "op_parcel_earliest_pickup_time"
 G_OP_PA_LPT = "op_parcel_latest_pickup_time"
@@ -239,7 +242,7 @@ G_OP_MAX_DURATION_HOURS = "op_max_charging_duration_hours"           # List of p
 G_OP_STATIONS_MAX_DURATIONS = "op_max_charging_durations"            # max allowed charging durations at stations corresponding to applicable hours in G_OP_MAX_DURATION_HOURS
 
 # Maintenance
-G_OP_CLEAN_M = "op_cleaning_method"
+G_OP_CLEAN_M = "op_maintenance_method"
 G_OP_APS_CLEAN = "op_min_cleanliness_after_planstop"
 G_PUBLIC_CLEANING_FILE = "op_cleaning_stations_file"
 G_OP_MIN_SOC_CLEAN_PUBLIC = "op_min_cleanliness_public_station"    # Minimum soc limit after which a EV must visit charging station
@@ -614,6 +617,7 @@ class G_PLANSTOP_STATES(Enum):
     CHARGING : int = 3
     INACTIVE : int = 4
     RESERVATION : int = 5
+    MAINTENANCE : int = 6
 
 # Plan Request States
 G_PRQS_NO_OFFER = 1

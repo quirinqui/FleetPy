@@ -733,6 +733,7 @@ class FleetControlBase(metaclass=ABCMeta):
     def _call_time_trigger_additional_tasks(self, sim_time):
         """This method can be used to trigger all fleet operational tasks that are not related to request assignment:
         - charging processes
+        - maintenance processes
         - changes to active fleet size
         - vehicle repositioning
         - dynamic pricing
@@ -757,7 +758,14 @@ class FleetControlBase(metaclass=ABCMeta):
             self.charging_strategy.time_triggered_charging_processes(sim_time)
             add_dyn_dict[G_FCTRL_CT_CH] = round(time.perf_counter() - t0, 3)
 
-        # 2) Dynamic Fleet Sizing
+        # 2) Maintenance Processes
+        # ---------------------
+        if self.maintenance_strategy:
+            t0 = time.perf_counter()
+            self.maintenance_strategy.time_triggered_maintenance_processes(sim_time)
+            add_dyn_dict[G_FCTRL_CT_MAIN] = round(time.perf_counter() - t0, 3)
+
+        # 3) Dynamic Fleet Sizing
         # -----------------------
         repo_activated_veh = False
         if self.dyn_fleet_sizing:
@@ -767,7 +775,7 @@ class FleetControlBase(metaclass=ABCMeta):
                 repo_activated_veh = True
             add_dyn_dict[G_FCTRL_CT_DFS] = round(time.perf_counter() - t0, 3)
 
-        # 3) Repositioning
+        # 4) Repositioning
         # -------------------
         if self.repo is not None and (sim_time % self.repo_time_step == 0 or repo_activated_veh):
             t0 = time.perf_counter()
@@ -776,24 +784,18 @@ class FleetControlBase(metaclass=ABCMeta):
             self.repo.determine_and_create_repositioning_plans(sim_time)
             add_dyn_dict[G_FCTRL_CT_REPO] = round(time.perf_counter() - t0, 3)
 
-        # 4) Dynamic Pricing
+        # 5) Dynamic Pricing
         # ------------------
         if self.dyn_pricing is not None:
             t0 = time.perf_counter()
             self.dyn_pricing.update_current_price_factors(sim_time)
             add_dyn_dict[G_FCTRL_CT_DP] = round(time.perf_counter() - t0, 3)
 
-        # 5) Move idle vehicles if on-street parking is not allowed
+        # 6) Move idle vehicles if on-street parking is not allowed
         # ---------------------------------------------------------
         if not self.allow_on_street_parking:
             self.charging_management.move_idle_vehicles_to_nearest_depots(sim_time, self)
 
-        # 6) Maintenance Processes
-        # ---------------------
-        # if self.maintenance_strategy:
-        #     t0 = time.perf_counter()
-        #     self.charging_strategy.time_triggered_charging_processes(sim_time)
-        #     add_dyn_dict[G_FCTRL_CT_CH] = round(time.perf_counter() - t0, 3)
 
         # record
         if add_dyn_dict:
