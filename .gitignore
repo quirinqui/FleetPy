@@ -1,6 +1,6 @@
 # private simulation scripts (private copies of bugfix_or_run.py with modifications for specific scenarios)
 run_private*.py
-!run_private_maintanance_repo.py
+!run_private_maintenance_repo.py
 
 # data directories except for example
 data/demand/*
@@ -27,6 +27,7 @@ data/zones/*
 # study directories except for example
 studies/*
 !studies/example_study
+!studies/Maintenance
 studies/example_study/results/*
 # Q
 !studies/Maintanance_tests
