@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from src.infra.ChargingInfrastructure import OperatorChargingAndDepotInfrastructure, PublicChargingInfrastructureOperator
     from src.infra.MaintenanceInfrastructure import PublicMaintenanceInfrastructureOperator
     from src.simulation.StationaryProcess import ChargingProcess
+    from src.simulation.StationaryProcess import MaintenanceProcess
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # global variables
@@ -57,7 +58,7 @@ INPUT_PARAMETERS_FleetControlBase = {
         G_OP_CONST_BT, G_OP_ADD_BT, G_OP_INIT_VEH_DIST
         ],
     "mandatory_modules": [],
-    "optional_modules": [G_RA_RES_MOD, G_OP_CH_M, G_OP_REPO_M, G_OP_DYN_P_M, G_OP_DYN_FS_M]
+    "optional_modules": [G_RA_RES_MOD, G_OP_CH_M, G_OP_REPO_M, G_OP_DYN_P_M, G_OP_DYN_FS_M, G_OP_CLEAN_M]
 }
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -221,7 +222,6 @@ class FleetControlBase(metaclass=ABCMeta):
         # maintenance management and strategy
         # --------------------------------
         self.min_aps_clean = operator_attributes.get(G_OP_APS_CLEAN, 0.1)
-        # TODO # init available charging operators
         self.list_pub_maintenance_infra = list_pub_maintenance_infra
         maintenance_method = operator_attributes.get(G_OP_CLEAN_M)
         if maintenance_method is not None:

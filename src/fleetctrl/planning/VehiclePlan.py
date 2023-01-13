@@ -194,7 +194,13 @@ class PlanStopBase(metaclass=ABCMeta):
         """ set the planned soc at arrival and departure at plan stop
         :param arrival soc: soc of vehicle at arrival
         :param departure_soc: soc at end of charging process"""
-        
+
+    @abstractmethod
+    def set_planned_arrival_and_departure_clean(self, arrival_clean: float, departure_clean: float):
+        """ set the planned soc at arrival and departure at plan stop
+        :param arrival soc: soc of vehicle at arrival
+        :param departure_soc: soc at end of charging process"""
+
     @abstractmethod
     def update_rid_boarding_time_constraints(self, rid, new_earliest_pickup_time : float=None, new_latest_pickup_time : float=None):
         """ this method can be used to update boarding time constraints a request in this plan stop (if given)
@@ -224,8 +230,8 @@ class PlanStop(PlanStopBase):
         this class is the most general class of plan stops"""
     def __init__(self, position, boarding_dict={}, max_trip_time_dict={}, latest_arrival_time_dict={}, earliest_pickup_time_dict={}, latest_pickup_time_dict={},
                  change_nr_pax=0, change_nr_parcels=0, earliest_start_time=None, latest_start_time=None, duration=None, earliest_end_time=None,
-                 locked=False, locked_end=False, charging_power=0, planstop_state : G_PLANSTOP_STATES=G_PLANSTOP_STATES.MIXED,
-                 charging_task_id: Tuple[int, str] = None, status: Optional[VRL_STATES] = None):
+                 locked=False, locked_end=False, charging_power=0, maintenance_speed=0, planstop_state : G_PLANSTOP_STATES=G_PLANSTOP_STATES.MIXED,
+                 charging_task_id: Tuple[int, str] = None, maintenance_task_id: Tuple[int, str] = None, status: Optional[VRL_STATES] = None):
         """
         :param position: network position (3 tuple) of the position this PlanStops takes place (target for routing)
         :param boarding_dict: dictionary with entries +1 -> list of request ids that board the vehicle there; -1 -> list of requests that alight the vehicle there
@@ -256,6 +262,9 @@ class PlanStop(PlanStopBase):
         
         # charging
         self.charging_power = charging_power
+
+        #maintenance
+        self.maintenance_speed = maintenance_speed
         
         # parameters that define capacity constraints
         self.change_nr_pax = change_nr_pax
@@ -300,6 +309,7 @@ class PlanStop(PlanStopBase):
         self.infeasible_locked = False
 
         self.charging_task_id: Tuple[int, str] = charging_task_id
+        self.maintenance_task_id: Tuple[int, str] = maintenance_task_id
         
     def get_pos(self) -> tuple:
         """returns network position of this plan stop
@@ -333,7 +343,8 @@ class PlanStop(PlanStopBase):
                          latest_pickup_time_dict=self.latest_pickup_time_dict.copy(), change_nr_pax=self.change_nr_pax, change_nr_parcels=self.change_nr_parcels,
                          earliest_start_time=self.direct_earliest_start_time, latest_start_time=self.direct_latest_start_time,
                          duration=self.direct_duration, earliest_end_time=self.direct_earliest_end_time, locked=self.locked, locked_end=self.locked_end,
-                         charging_power=self.charging_power, charging_task_id=self.charging_task_id, planstop_state=self.state)
+                         charging_power=self.charging_power, charging_task_id=self.charging_task_id, maintenance_speed=self.maintenance_speed,
+                         maintenance_task_id=self.maintenance_task_id, planstop_state=self.state)
         cp_ps._planned_arrival_time = self._planned_arrival_time
         cp_ps._planned_departure_time = self._planned_departure_time
         cp_ps._planned_arrival_soc = self._planned_arrival_soc
@@ -407,6 +418,9 @@ class PlanStop(PlanStopBase):
     
     def get_charging_power(self) -> float:
         return self.charging_power
+
+    def get_maintenance_speed(self) -> float:
+        return self.maintenance_speed
     
     def get_boarding_time_constraint_dicts(self) -> Tuple[Dict, Dict, Dict, Dict]:
         return self.earliest_pickup_time_dict, self.latest_pickup_time_dict, self.max_trip_time_dict, self.latest_arrival_time_dict
@@ -552,6 +566,26 @@ class ChargingPlanStop(PlanStop):
 
 class MaintenancePlanStop(PlanStop):
     """ this plan stop can be used to schedule a maintenance only process """
+    def __init__(self, position, earliest_start_time=None, latest_start_time=None, duration=None,
+                 earliest_end_time=None, locked=False, locked_end=False, maintenance_speed=0,
+                 maintenance_task_id: Tuple[int, str] = None, status: Optional[VRL_STATES] = None):
+        """
+        :param position: network position (3 tuple) of the position this PlanStops takes place (target for routing)
+        :param earliest_start_time: (float) absolute earliest start time this plan stop is allowed to start
+        :param latest_start_time: (float) absolute latest start time this plan stop is allowed to start
+        :param duration: (float) minimum duration this plan stops takes at this location
+        :param earliest_end_time: (float) absolute earliest time a vehicle is allowed to leave at this plan stop
+        :param locked: (bool) false by default; if true this planstop can no longer be unassigned from vehicleplan and has to be fullfilled. currently only working when also all planstops before this planstop are locked, too
+        :param locked_end: (bool) false by default; if true, no planstops can be added after this planstop in the assignment algorithm and it cannot be removed by the assignemnt algorithm (insertions before are possible!)
+        :param charging_power: optional (float); if given the vehicle is charged with this power (TODO unit!) while at this stop
+        """
+        super().__init__(position, boarding_dict={}, max_trip_time_dict={}, latest_arrival_time_dict={},
+                         earliest_pickup_time_dict={}, latest_pickup_time_dict={}, change_nr_pax=0,
+                         earliest_start_time=earliest_start_time, latest_start_time=latest_start_time,
+                         duration=duration,
+                         earliest_end_time=earliest_end_time, locked=locked, locked_end=locked_end,
+                         maintenance_speed=maintenance_speed,
+                         planstop_state=G_PLANSTOP_STATES.MAINTENANCE, maintenance_task_id=maintenance_task_id, status=status)
 
 class VehiclePlan:
     """ this class is used to plan tasks for a vehicle and evaluates feasiblity of time constraints of this plan
@@ -812,16 +846,15 @@ class VehiclePlan:
                     c_soc = max(c_soc, 1.0)
                 pstop.set_planned_arrival_and_departure_soc(last_c_soc, c_soc)
 
-                # TODO Q find appropriate clean calculation after trips
-                # pstop.set_planned_arrival_and_departure_clean(last_c_clean,)
-
-           #     if pstop.get_maintenance_speed() > 0:
-            #        c_clean += veh_obj.compute_soc_charging()
-             #       c_clean = max(c_soc, 1.0)
-              #  pstop.set_planned_arrival_and_departure_clean(last_c_clean, c_clean)
+                # set maintenance/cleanliness when cleaning
+                if pstop.get_maintenance_speed() > 0:
+                    LOG.debug("QQQQQQQQQQQQQQQQ er reinigt scheinbar irgendwann?")
+                    c_clean += veh_obj.compute_cleaning(pstop.get_maintenance_speed(), c_time - last_c_time)
+                    c_clean = max(c_clean, 1.0)
+                pstop.set_planned_arrival_and_departure_clean(last_c_clean, c_clean)
 
         return {"stop_index": stop_index, "c_pos": c_pos, "c_soc": c_soc, "c_time": c_time, "c_pax": c_pax,
-                "pax_info": self.pax_info.copy(), "c_nr_pax": nr_pax, "c_nr_parcels" : nr_parcels}
+                "pax_info": self.pax_info.copy(), "c_nr_pax": nr_pax, "c_nr_parcels" : nr_parcels, "c_clean" : c_clean}
 
     def update_tt_and_check_plan(self, veh_obj : SimulationVehicle, sim_time : float, routing_engine : NetworkBase, init_plan_state : dict=None, keep_feasible : bool=False):
         """This method updates the planning properties of all PlanStops of the Plan according to the new vehicle
@@ -845,6 +878,7 @@ class VehiclePlan:
             start_stop_index = init_plan_state["stop_index"] + 1
             c_pos = init_plan_state["c_pos"]
             c_soc = init_plan_state["c_soc"]
+            c_clean = init_plan_state["c_clean"]
             c_time = init_plan_state["c_time"]
             c_pax = init_plan_state["c_pax"].copy()
             c_nr_pax = init_plan_state["c_nr_pax"]
@@ -859,6 +893,7 @@ class VehiclePlan:
             start_stop_index = 0
             c_pos = veh_obj.pos
             c_soc = veh_obj.soc
+            c_clean = veh_obj.cleanliness
             c_time = sim_time
             if self.list_plan_stops[0].is_locked():  # set time at start_time of boarding process
                 boarding_started = self.list_plan_stops[0].get_started_at()
@@ -892,10 +927,13 @@ class VehiclePlan:
                     infeasible_index = i
                     # LOG.debug(" -> charging wrong")
 
+                # TODO Q maintenance mod here?
+
             if c_pos == pstop_pos:
 
                 last_c_time = c_time
                 last_c_soc = c_soc
+                last_c_clean = c_clean
 
                 earliest_time = pstop.get_earliest_start_time()
                 if c_time < earliest_time:
@@ -938,7 +976,14 @@ class VehiclePlan:
                 if pstop.get_charging_power() > 0:  # TODO # is charging now in waiting included as planned here?
                     c_soc += veh_obj.compute_soc_charging(pstop.get_charging_power(), c_time - last_c_time)
                     c_soc = max(c_soc, 1.0)
+
+                if pstop.get_maintenance_speed() > 0:
+                    LOG.debug("QQQQQQQQQQQQQQQQ er reinigt scheinbar irgendwann?")
+                    c_clean += veh_obj.compute_cleaning(pstop.get_maintenance_speed(), c_time - last_c_time)
+                    c_clean = max(c_clean, 1.0)
+
                 pstop.set_planned_arrival_and_departure_soc(last_c_soc, c_soc)
+                pstop.set_planned_arrival_and_departure_clean(last_c_clean, c_clean)
                     
         if keep_feasible and not is_feasible:
             for i, p_stop in enumerate(self.list_plan_stops):

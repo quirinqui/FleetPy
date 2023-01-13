@@ -28,6 +28,7 @@ data/zones/*
 studies/*
 !studies/example_study
 !studies/Maintenance
+studies/Maintenance/results/*
 studies/example_study/results/*
 # Q
 !studies/Maintanance_tests

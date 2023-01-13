@@ -21,11 +21,8 @@ class MaintenanceBase(ABC):
         :param solver: solver for optimization problems
         """
         self.fleetctrl = fleetctrl
-        self.op_maintenance_depot_infra = fleetctrl.op_maintenance_depot_infra
         self.list_pub_maintenance_infra = fleetctrl.list_pub_maintenance_infra
         self.all_maintenance_infra: List[PublicMaintenanceInfrastructureOperator] = []
-        if self.op_maintenance_depot_infra is not None:
-            self.all_maintenance_infra.append(self.op_maintenance_depot_infra)
         self.all_maintenance_infra += self.list_pub_maintenance_infra[:]
         self.routing_engine = fleetctrl.routing_engine
         self.solver_key = solver

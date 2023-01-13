@@ -73,7 +73,7 @@ class SimulationVehicle:
         self.start_next_leg_first = False   # flag, if True, a new assignment has been made, which has to be activated first in the next call of update_veh_state
 
     def __str__(self):
-        return f"veh {self.vid} at pos {self.pos} with soc {self.soc} leg status {self.status} remaining time {self.cl_remaining_time} number remaining legs: {len(self.assigned_route)} ob : {[rq.get_rid_struct() for rq in self.pax]}"
+        return f"veh {self.vid} at pos {self.pos} with soc {self.soc} and cleanliness {self.cleanliness} leg status {self.status} remaining time {self.cl_remaining_time} number remaining legs: {len(self.assigned_route)} ob : {[rq.get_rid_struct() for rq in self.pax]}"
 
     def reset_current_leg(self):
         # current info

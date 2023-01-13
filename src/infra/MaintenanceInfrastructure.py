@@ -107,9 +107,9 @@ class MaintenanceStation:
     station_history = defaultdict(list)
     station_history_file_path = None
 
-    def __init__(self, station_id, ch_op_id, node, spot_ids, maintenance_speed: List[float]):
+    def __init__(self, station_id, clean_op_id, node, spot_ids, maintenance_speed: List[float]):
         self.id = station_id
-        self.ch_op_id = ch_op_id
+        self.clean_op_id = clean_op_id
         self.pos = (node, None, None)
         self._spots: Dict[int, MaintenanceSpot] = {id: MaintenanceSpot(id, max_cleaning_speed)
                                                        for id, max_cleaning_speed in zip(spot_ids, maintenance_speed)}
@@ -335,7 +335,7 @@ class MaintenanceStation:
             self.station_history["time"].append(sim_time)
             self.station_history["event"].append(event_name)
             self.station_history["station_id"].append(self.id)
-            self.station_history["ch_op_id"].append(self.ch_op_id)
+            self.station_history["clean_op_id"].append(self.clean_op_id)
             self.station_history["vid"].append(vehicle.vid)
             self.station_history["op_id"].append(vehicle.op_id)
             self.station_history["veh_type"].append(vehicle.veh_type)
@@ -368,8 +368,8 @@ class MaintenanceStation:
 # TODO # keep track of parking (inactive) vehicles | query parking lots
 class Depot(MaintenanceStation):
     """This class represents a maintenance station with parking lots for inactive vehicles."""
-    def __init__(self, station_id, ch_op_id, node, spot_ids, maintenance_speeds: List[float], number_parking_spots):
-        super().__init__(station_id, ch_op_id, node, spot_ids, maintenance_speeds)
+    def __init__(self, station_id, clean_op_id, node, spot_ids, maintenance_speeds: List[float], number_parking_spots):
+        super().__init__(station_id, clean_op_id, node, spot_ids, maintenance_speeds)
         self.number_parking_spots = number_parking_spots
         self.deactivated_vehicles: tp.List[SimulationVehicle] = []
         
@@ -432,7 +432,7 @@ class Depot(MaintenanceStation):
                 selected_maintenance_option = min(maintenance_options, key=lambda x:x[3])
                 ch_process = self.make_booking(simulation_time, selected_maintenance_option[1], veh_obj, start_time=selected_maintenance_option[2], end_time=selected_maintenance_option[3])
                 start_time, end_time = ch_process.get_scheduled_start_end_times()
-                maintenance_task_id = (self.ch_op_id, ch_process.id)
+                maintenance_task_id = (self.clean_op_id, ch_process.id)
                 ch_ps = MaintenancePlanStop(self.pos, maintenance_task_id=maintenance_task_id, earliest_start_time=start_time, duration=end_time-start_time,
                                          maintenance_speed=selected_maintenance_option[5], locked=True)
                 
@@ -467,11 +467,11 @@ class Depot(MaintenanceStation):
 
 class PublicMaintenanceInfrastructureOperator:
 
-    def __init__(self, ch_op_id: int, public_maintenance_station_file: str, ch_operator_attributes: dict,
+    def __init__(self, clean_op_id: int, public_maintenance_station_file: str, ch_operator_attributes: dict,
                  scenario_parameters: dict, dir_names: dict, routing_engine: NetworkBase, initial_maintenance_events_f: str = None):
         """This class represents the operator for the maintenance infrastructure.
 
-        :param ch_op_id: id of maintenance operator
+        :param clean_op_id: id of maintenance operator
         :param public_maintenance_station_file: path to file where maintenance stations are loaded from
         :param ch_operator_attributes: dictionary that can contain additionally required parameters (parameter specific for maintenance operator)
         :param scenario_parameters: dictionary that contain global scenario parameters
@@ -480,7 +480,7 @@ class PublicMaintenanceInfrastructureOperator:
         :param initial_maintenance_events_f: in this file maintenance events are specified that are booked at the beginning of the simulation
         """
 
-        self.ch_op_id = ch_op_id
+        self.clean_op_id = clean_op_id
         self.routing_engine = routing_engine
         self.ch_operator_attributes = ch_operator_attributes
         self.maintenance_stations: tp.List[MaintenanceStation] = self._loading_maintenance_stations(public_maintenance_station_file, dir_names)
@@ -530,7 +530,7 @@ class PublicMaintenanceInfrastructureOperator:
             spot_maintenance_speeds = []
             for maintenance_speed, number in cunit_dict.items():
                 spot_maintenance_speeds += [maintenance_speed for _ in range(number)]
-            stations.append(MaintenanceStation(station_id, self.ch_op_id, node_index, spot_ids, spot_maintenance_speeds))
+            stations.append(MaintenanceStation(station_id, self.clean_op_id, node_index, spot_ids, spot_maintenance_speeds))
         return stations
 
     def modify_booking(self, sim_time, booking: MaintenanceProcess):
@@ -669,7 +669,7 @@ class OperatorMaintenanceAndDepotInfrastructure(PublicMaintenanceInfrastructureO
             spot_maintenance_speeds = []
             for maintenance_speed, number in cunit_dict.items():
                 spot_maintenance_speeds += [maintenance_speed for _ in range(number)]
-            stations.append(Depot(station_id, self.ch_op_id, node_index, spot_ids, spot_maintenance_speeds, number_parking_spots))
+            stations.append(Depot(station_id, self.clean_op_id, node_index, spot_ids, spot_maintenance_speeds, number_parking_spots))
         return stations
     
     def find_nearest_free_depot(self, pos, check_free=True) -> Depot:
