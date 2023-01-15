@@ -38,7 +38,7 @@ DEFAULT_LOG_LEVEL = logging.INFO
 LOG = logging.getLogger(__name__)
 BUFFER_SIZE = 10
 PROGRESS_LOOP = "demand"
-PROGRESS_LOOP_VEHICLE_STATUS = [VRL_STATES.IDLE,VRL_STATES.CHARGING,VRL_STATES.REPOSITION]
+PROGRESS_LOOP_VEHICLE_STATUS = [VRL_STATES.IDLE,VRL_STATES.CHARGING,VRL_STATES.MAINTENANCE,VRL_STATES.REPOSITION]
 # check for computation on LRZ cluster
 if os.environ.get('SLURM_PROCID'):
     PROGRESS_LOOP = "off"
@@ -148,6 +148,7 @@ class FleetSimulationBase:
         self.check_sim_env_spec_inputs(self.scenario_parameters)
         self.n_op = self.scenario_parameters[G_NR_OPERATORS]
         self.n_ch_op = self.scenario_parameters.get(G_NR_CH_OPERATORS, 0)
+        self.n_clean_op = self.scenario_parameters.get(G_NR_CLEAN_OPERATORS, 0)
         self._manager: tp.Optional[Manager] = None
         self._shared_dict: dict = {}
         self._plot_class_instance: tp.Optional[PyPlot] = None
@@ -158,6 +159,9 @@ class FleetSimulationBase:
                                                                               prefix="op_")
         self.list_ch_op_dicts: tp.Dict[str,str] = build_operator_attribute_dicts(scenario_parameters, self.n_ch_op,
                                                                                  prefix="ch_op_")
+        self.list_clean_op_dicts: tp.Dict[str, str] = build_operator_attribute_dicts(scenario_parameters, self.n_clean_op,
+                                                                                  prefix="clean_op_")
+
 
         # take care of random seeds at beginning of simulations
         random.seed(self.scenario_parameters[G_RANDOM_SEED])
@@ -252,11 +256,13 @@ class FleetSimulationBase:
         else:
             raise IOError(f"Public transport module {pt_type} not defined for current simulation environment.")
 
-        # attribute for demand, charging and zone module
+        # attribute for demand, charging, maintenance and zone module
         self.demand = None
         self._load_demand_module()
         self.charging_operator_dict = {}    # dict "op" -> operator_id -> OperatorChargingInfrastructure, "pub" -> ch_op_id -> ChargingInfrastructureOperator
         self._load_charging_modules()
+        self.maintenance_operator_dict = {}
+        self._load_maintenance_modules()
 
         # attributes for fleet controller and vehicles
         self.sim_vehicles: tp.Dict[tp.Tuple[int, int], SimulationVehicle] = {}
@@ -339,6 +345,43 @@ class FleetSimulationBase:
                         initial_ch_events_f = os.path.join(self.dir_names[G_DIR_INFRA], "charging_events", f_name)
                     ch_op = PublicChargingInfrastructureOperator(ch_op_id, pub_cs_f, ch_op_dict, self.scenario_parameters, self.dir_names, self.routing_engine, initial_charging_events_f=initial_ch_events_f)
                     self.charging_operator_dict["pub"][ch_op_id] = ch_op
+
+    def _load_maintenance_modules(self):
+        """ Loads necessary modules for maintenance """
+        self.maintenance_operator_dict = {"op": {}, "pub": {}}
+        # TODO Q hier habe ich aufgehört
+        LOG.debug("load maintenance infra: maintenance op dicts: {}".format(self.list_maintenance_op_dicts))
+        if self.dir_names.get(G_DIR_INFRA):
+            # operator depots:
+            from src.infra.MaintenanceInfrastructure import OperatorMaintenanceAndDepotInfrastructure
+            for op_id, op_dict in enumerate(self.list_op_dicts):
+                depot_f_name = op_dict.get(G_OP_DEPOT_F)
+                if depot_f_name is not None:
+                    depot_f = os.path.join(self.dir_names[G_DIR_INFRA], depot_f_name)
+                    op_clean = OperatorMaintenanceAndDepotInfrastructure(op_id, depot_f, op_dict,
+                                                                       self.scenario_parameters, self.dir_names,
+                                                                       self.routing_engine)
+                    self.maintenance_operator_dict["op"][op_id] = op_clean
+
+            # public charging
+            if len(self.list_ch_op_dicts) > 0:
+                from src.infra.MaintenanceInfrastructure import PublicMaintenanceInfrastructureOperator
+                for clean_op_id, clean_op_dict in enumerate(self.list_clean_op_dicts):
+                    pub_cs_f_name = clean_op_dict.get(G_CLEAN_OP_F)
+                    if pub_cs_f_name is None:
+                        raise EnvironmentError(
+                            "Public maintenance stations file not given as input! parameter {} required!".format(
+                                G_CLEAN_OP_F))
+                    pub_cs_f = os.path.join(self.dir_names[G_DIR_INFRA], pub_cs_f_name)
+                    initial_clean_events_f = None
+                    if clean_op_dict.get(G_CLEAN_OP_INIT_CH_EVENTS_F) is not None:
+                        f_name = clean_op_dict.get(G_CH_OP_INIT_CH_EVENTS_F)
+                        initial_clean_events_f = os.path.join(self.dir_names[G_DIR_INFRA], "maintenance_events", f_name)
+                    ch_op = PublicMaintenanceInfrastructureOperator(clean_op_id, pub_cs_f, clean_op_dict,
+                                                                 self.scenario_parameters, self.dir_names,
+                                                                 self.routing_engine,
+                                                                 initial_maintenance_events_f=initial_clean_events_f)
+                    self.maintenance_operator_dict["pub"][clean_op_id] = ch_op
 
     def _load_fleetctr_vehicles(self):
         """ Loads the fleet controller and vehicles """
@@ -611,7 +654,7 @@ class FleetSimulationBase:
                 self.operators[op_id].acknowledge_alighting(rid, vid, alighting_end_time)
 
                 # this function call reduces the cleanliness of a vehicle after a successfull alighting process
-                veh_obj.compute_new_cleanliness(0.1)
+                veh_obj.compute_new_cleanliness(0.33)
                 LOG.debug(f"New reduced cleanliness computed: {veh_obj.cleanliness}")
 
             # send update to operator
