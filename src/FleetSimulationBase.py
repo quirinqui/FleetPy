@@ -159,7 +159,7 @@ class FleetSimulationBase:
                                                                               prefix="op_")
         self.list_ch_op_dicts: tp.Dict[str,str] = build_operator_attribute_dicts(scenario_parameters, self.n_ch_op,
                                                                                  prefix="ch_op_")
-        self.list_clean_op_dicts: tp.Dict[str, str] = build_operator_attribute_dicts(scenario_parameters, self.n_clean_op,
+        self.list_maintenance_op_dicts: tp.Dict[str, str] = build_operator_attribute_dicts(scenario_parameters, self.n_clean_op,
                                                                                   prefix="clean_op_")
 
 
@@ -363,10 +363,10 @@ class FleetSimulationBase:
                                                                        self.routing_engine)
                     self.maintenance_operator_dict["op"][op_id] = op_clean
 
-            # public charging
-            if len(self.list_ch_op_dicts) > 0:
+            # public maintenance
+            if len(self.list_maintenance_op_dicts) > 0:
                 from src.infra.MaintenanceInfrastructure import PublicMaintenanceInfrastructureOperator
-                for clean_op_id, clean_op_dict in enumerate(self.list_clean_op_dicts):
+                for clean_op_id, clean_op_dict in enumerate(self.list_maintenance_op_dicts):
                     pub_cs_f_name = clean_op_dict.get(G_CLEAN_OP_F)
                     if pub_cs_f_name is None:
                         raise EnvironmentError(
@@ -375,13 +375,13 @@ class FleetSimulationBase:
                     pub_cs_f = os.path.join(self.dir_names[G_DIR_INFRA], pub_cs_f_name)
                     initial_clean_events_f = None
                     if clean_op_dict.get(G_CLEAN_OP_INIT_CH_EVENTS_F) is not None:
-                        f_name = clean_op_dict.get(G_CH_OP_INIT_CH_EVENTS_F)
+                        f_name = clean_op_dict.get(G_CLEAN_OP_INIT_CH_EVENTS_F)
                         initial_clean_events_f = os.path.join(self.dir_names[G_DIR_INFRA], "maintenance_events", f_name)
-                    ch_op = PublicMaintenanceInfrastructureOperator(clean_op_id, pub_cs_f, clean_op_dict,
+                    clean_op = PublicMaintenanceInfrastructureOperator(clean_op_id, pub_cs_f, clean_op_dict,
                                                                  self.scenario_parameters, self.dir_names,
                                                                  self.routing_engine,
                                                                  initial_maintenance_events_f=initial_clean_events_f)
-                    self.maintenance_operator_dict["pub"][clean_op_id] = ch_op
+                    self.maintenance_operator_dict["pub"][clean_op_id] = clean_op
 
     def _load_fleetctr_vehicles(self):
         """ Loads the fleet controller and vehicles """
@@ -411,7 +411,7 @@ class FleetSimulationBase:
                         vid += 1
                 OpClass: FleetControlBase = load_fleet_control_module(operator_module_name)
                 self.operators.append(OpClass(op_id, operator_attributes, list_vehicles, self.routing_engine, self.zones,
-                                            self.scenario_parameters, self.dir_names, self.charging_operator_dict["op"].get(op_id, None), list(self.charging_operator_dict["pub"].values())))
+                                            self.scenario_parameters, self.dir_names, self.charging_operator_dict["op"].get(op_id, None), list(self.charging_operator_dict["pub"].values()), list(self.maintenance_operator_dict["pub"].values())))
             else:
                 from dev.fleetctrl.LinebasedFleetControl import LinebasedFleetControl
                 OpClass = LinebasedFleetControl(op_id, self.gtfs_data_dir, self.routing_engine, self.zones, self.scenario_parameters, self.dir_names, self.charging_operator_dict["op"].get(op_id, None), list(self.charging_operator_dict["pub"].values()))

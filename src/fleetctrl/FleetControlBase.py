@@ -475,7 +475,7 @@ class FleetControlBase(metaclass=ABCMeta):
 
     @abstractmethod
     def assign_vehicle_plan(self, veh_obj : SimulationVehicle, vehicle_plan : VehiclePlan, sim_time : int,
-                            force_assign : bool=False, assigned_charging_task: Tuple[Tuple[str, int], ChargingProcess]=None, add_arg : Any=None):
+                            force_assign : bool=False, assigned_charging_task: Tuple[Tuple[str, int], ChargingProcess]=None, assigned_maintenance_task: Tuple[Tuple[str, int], MaintenanceProcess]=None, add_arg : Any=None):
         """ this method should be used to assign a new vehicle plan to a vehicle
 
         WHEN OVERWRITING THIS FUNCTION MAKE SURE TO CALL AT LEAST THE LINES BELOW (i.e. super())
@@ -513,6 +513,9 @@ class FleetControlBase(metaclass=ABCMeta):
         if assigned_charging_task is not None:
             self._active_charging_processes[assigned_charging_task[0]] = assigned_charging_task[1]
             self._vid_to_assigned_charging_process[veh_obj.vid] = assigned_charging_task[0]
+        if assigned_maintenance_task is not None:
+            self._active_maintenance_processes[assigned_maintenance_task[0]] = assigned_maintenance_task[1]
+            self._vid_to_assigned_maintenance_process[veh_obj.vid] = assigned_maintenance_task[0]
         new_list_vrls = self._build_VRLs(vehicle_plan, veh_obj, sim_time)
         veh_obj.assign_vehicle_plan(new_list_vrls, sim_time, force_ignore_lock=force_assign)
         self.veh_plans[veh_obj.vid] = vehicle_plan

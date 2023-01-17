@@ -30,7 +30,7 @@ class PoolingInsertionHeuristicOnly(FleetControlBase):
     """
     # TODO # clarify dependency to fleet simulation module
     def __init__(self, op_id, operator_attributes, list_vehicles, routing_engine, zone_system, scenario_parameters,
-                 dir_names, op_charge_depot_infra=None, list_pub_charging_infra= []):
+                 dir_names, op_charge_depot_infra=None, list_pub_charging_infra= [], list_pub_maintenance_infra= []):
         """The specific attributes for the fleet control module are initialized. Strategy specific attributes are
         introduced in the children classes.
 
@@ -52,7 +52,7 @@ class PoolingInsertionHeuristicOnly(FleetControlBase):
         :type list_pub_charging_infra: list of PublicChargingInfrastructureOperator
         """
         super().__init__(op_id, operator_attributes, list_vehicles, routing_engine, zone_system, scenario_parameters,
-                         dir_names=dir_names, op_charge_depot_infra=op_charge_depot_infra, list_pub_charging_infra=list_pub_charging_infra)
+                         dir_names=dir_names, op_charge_depot_infra=op_charge_depot_infra, list_pub_charging_infra=list_pub_charging_infra, list_pub_maintenance_infra=list_pub_maintenance_infra)
         # TODO # make standard in FleetControlBase
         self.rid_to_assigned_vid = {} # rid -> vid
         self.pos_veh_dict = {}  # pos -> list_veh
@@ -288,8 +288,8 @@ class PoolingInsertionHeuristicOnly(FleetControlBase):
                                                                 self.routing_engine, prq, new_lpt, new_ept=new_ept,
                                                                 keep_feasible=True)
 
-    def assign_vehicle_plan(self, veh_obj, vehicle_plan, sim_time, force_assign=False, assigned_charging_task=None, add_arg=None):
-        super().assign_vehicle_plan(veh_obj, vehicle_plan, sim_time, force_assign=force_assign, assigned_charging_task=assigned_charging_task, add_arg=add_arg)
+    def assign_vehicle_plan(self, veh_obj, vehicle_plan, sim_time, force_assign=False, assigned_charging_task=None, assigned_maintenance_task=None, add_arg=None):
+        super().assign_vehicle_plan(veh_obj, vehicle_plan, sim_time, force_assign=force_assign, assigned_charging_task=assigned_charging_task, assigned_maintenance_task=assigned_maintenance_task, add_arg=add_arg)
 
     def lock_current_vehicle_plan(self, vid):
         super().lock_current_vehicle_plan(vid)

@@ -63,7 +63,7 @@ class MaintenanceThresholdPublicInfrastructure(MaintenanceBase):
                     if len(maintenance_possibilities) > 0:
                         clean_op_best = min(maintenance_possibilities, key=lambda x:x[3])
                         if best_maintenance_poss is None or clean_op_best[3] < best_maintenance_poss[3]:
-                            best_maintenance_poss = best_clean_op
+                            best_maintenance_poss = clean_op_best
                             best_clean_op = clean_op
                 if best_maintenance_poss is not None:
                     LOG.debug(f" -> best maintenance possibility: {best_maintenance_poss}")
@@ -71,6 +71,10 @@ class MaintenanceThresholdPublicInfrastructure(MaintenanceBase):
                     booking = best_clean_op.book_station(sim_time, veh_obj, station_id, spot_id, possible_start_time, possible_end_time)
                     station = best_clean_op.station_by_id[station_id]
                     start_time, end_time = booking.get_scheduled_start_end_times()
-                    maintenance_tast_id = (best_maintenance_poss.clean_op_id, booking.id)
+                    maintenance_task_id = (best_clean_op.clean_op_id, booking.id)
                     ps = MaintenancePlanStop(station.pos, earliest_start_time=start_time, duration=end_time-start_time,
-                                             maintenance_speed=max_maintenance_speed, maintenance_tast_id=maintenance_tast_id, looked=True)
+                                             maintenance_speed=max_maintenance_speed, maintenance_task_id=maintenance_task_id, locked=True)
+                    current_plan.add_plan_stop(ps, veh_obj, sim_time, self.routing_engine)
+                    self.fleetctrl.lock_current_vehicle_plan(veh_obj.vid)
+                    self.fleetctrl.assign_vehicle_plan(veh_obj, current_plan, sim_time,
+                                                       assigned_maintenance_task=(maintenance_task_id, booking))

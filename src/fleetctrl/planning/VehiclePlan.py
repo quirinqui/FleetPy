@@ -848,7 +848,7 @@ class VehiclePlan:
 
                 # set maintenance/cleanliness when cleaning
                 if pstop.get_maintenance_speed() > 0:
-                    LOG.debug("QQQQQQQQQQQQQQQQ er reinigt scheinbar irgendwann?")
+                    LOG.debug("QQQQQQQQQQQQQQQQ1 er reinigt scheinbar irgendwann 1?")
                     c_clean += veh_obj.compute_cleaning(pstop.get_maintenance_speed(), c_time - last_c_time)
                     c_clean = max(c_clean, 1.0)
                 pstop.set_planned_arrival_and_departure_clean(last_c_clean, c_clean)

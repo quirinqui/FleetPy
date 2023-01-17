@@ -125,7 +125,7 @@ class SimulationVehicle:
         run is used. Only the time is checked.
         :return: {}: key > value
         """
-        final_state_dict = {G_V_OP_ID:self.op_id, G_V_VID:self.vid, G_V_INIT_SOC:self.soc}
+        final_state_dict = {G_V_OP_ID:self.op_id, G_V_VID:self.vid, G_V_INIT_SOC:self.soc,G_V_INIT_CLEAN:self.cleanliness}
         if self.assigned_route:
             final_state_dict[G_V_INIT_NODE] = self.assigned_route[-1].destination_pos[0]
             last_time = sim_end_time

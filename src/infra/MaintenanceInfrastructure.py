@@ -521,9 +521,9 @@ class PublicMaintenanceInfrastructureOperator:
         MaintenanceStation.set_history_file_path(file)
         stations = []
         for _, row in stations_df.iterrows():
-            station_id = row[G_INFRA_CS_ID]
+            station_id = row[G_INFRA_MS_ID]
             node_index = row[G_NODE_ID]
-            cunit_dict = decode_config_str(row[G_INFRA_CU_DEF])
+            cunit_dict = decode_config_str(row[G_INFRA_MU_DEF])
             if cunit_dict is None:
                 cunit_dict = {}
             spot_ids = [i for i in range(sum(cunit_dict.values()))]
@@ -659,9 +659,9 @@ class OperatorMaintenanceAndDepotInfrastructure(PublicMaintenanceInfrastructureO
         MaintenanceStation.set_history_file_path(file)
         stations = []
         for _, row in stations_df.iterrows():
-            station_id = row[G_INFRA_CS_ID]
+            station_id = row[G_INFRA_MS_ID]
             node_index = row[G_NODE_ID]
-            cunit_dict = decode_config_str(row[G_INFRA_CU_DEF])
+            cunit_dict = decode_config_str(row[G_INFRA_MU_DEF])
             number_parking_spots = row[G_INFRA_MAX_PARK]
             if cunit_dict is None:
                 cunit_dict = {}

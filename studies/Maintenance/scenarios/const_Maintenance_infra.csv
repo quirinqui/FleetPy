@@ -36,7 +36,7 @@ op_min_cleanliness_after_planstop,0.9
 op_n_maintenance_station_query,5
 op_n_maintenance_offer_per_station,5
 nr_maintenance_operators,1
-ch_op_public_maintenance_station_f,public_maintenance_stations.csv
+clean_op_public_maintenance_station_f,public_maintenance_stations.csv
 
 # Repositioning Flags
 zone_system_name,example_zones

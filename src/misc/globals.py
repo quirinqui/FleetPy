@@ -31,7 +31,7 @@ G_SIM_REALTIME_PLOT_VEHICLE_STATUS = "realtime_plot_veh_states"
 G_SIM_REALTIME_PLOT_EXTENTS = "realtime_plot_extents"
 G_NR_OPERATORS = "nr_mod_operators"
 G_NR_CH_OPERATORS = "nr_charging_operators"
-G_NR_CLEAN_OPERATORS = "nr_cleaning_operators"
+G_NR_CLEAN_OPERATORS = "nr_maintenance_operators"
 
 # general optional input
 G_ZONE_SYSTEM_NAME = "zone_system_name"
@@ -278,7 +278,9 @@ G_INFRA_DEPOT_FOR_ST = "depot_keep_free_for_short_term"
 
 # data input
 G_INFRA_CS_ID = "charging_station_id"
+G_INFRA_MS_ID = "maintenance_station_id"
 G_INFRA_CU_DEF = "charging_units"
+G_INFRA_MU_DEF = "maintenance_units"
 G_INFRA_MAX_PARK = "max_nr_parking"
 G_INFRA_PUB_UTIL = "public_util"
 
@@ -290,9 +292,9 @@ G_CH_OP_F = "ch_op_public_charging_station_f"
 G_CH_DISCONNECT_ON_FULL_SOC = "ch_op_disconnect_charging_on_full_soc"                  # Should a charging vehicle be disconnected immediately after full soc
 G_CH_OP_INIT_CH_EVENTS_F = "ch_op_init_charge_events_f"
 # maintenance operator
-G_CLEAN_OP_F = "ch_op_public_maintenance_station_f"
-G_MAINTENANCE_DISCONNECT_ON_FULL_CLEAN = "ch_op_disconnect_maintenance_on_full_clean"
-G_CLEAN_OP_INIT_CH_EVENTS_F = "ch_op_init_maintenance_events_f"
+G_CLEAN_OP_F = "clean_op_public_maintenance_station_f"
+G_MAINTENANCE_DISCONNECT_ON_FULL_CLEAN = "clean_op_disconnect_maintenance_on_full_clean"
+G_CLEAN_OP_INIT_CH_EVENTS_F = "clean_op_init_maintenance_events_f"
 # parameter for all charging operators
 G_CH_OP_MAX_STATION_SEARCH_RADIUS = "ch_max_station_search_radius"  # radius in seconds travel time (TODO ?)
 G_CH_OP_MAX_CHARGING_SEARCH = "ch_max_station_search"    # max number of charging stations to be considered
