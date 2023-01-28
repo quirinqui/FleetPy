@@ -204,7 +204,7 @@ class MaintenanceStation:
             self.__remove_from_scheduled(booking)
 
     def update_maintenance_state(self, booking: MaintenanceProcess, delta_time):
-        """ Charges the vehicle according to delta_time """
+        """ Maintenance update at the vehicle according to delta_time """
 
         spot = self._spots[booking.spot_id]
         assert spot.attached_vehicle.vid == booking.veh.vid, "the vehicle attached to the spot and the vehicle " \
@@ -620,7 +620,7 @@ class PublicMaintenanceInfrastructureOperator:
                                 ch_process = maintenance_station._booked_processes[booking_id]
                                 maintenance_station.cancel_booking(sim_time, ch_process)
                             except KeyError:
-                                LOG.warning("couldnt cancel maintenance booking {}".format(booking_id))
+                                LOG.warning("couldn't cancel maintenance booking {}".format(booking_id))
                         
     
     def time_trigger(self, sim_time):

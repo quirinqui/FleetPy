@@ -8,7 +8,7 @@ if tp.TYPE_CHECKING is True:
 # Simulation Vehicle Route Leg class
 # ----------------------------------
 class VehicleRouteLeg:
-    def __init__(self, status, destination_pos, rq_dict, power=0.0, duration=None, route=[], locked=False,
+    def __init__(self, status, destination_pos, rq_dict, power=0.0, maintenance_speed=0.0, duration=None, route=[], locked=False,
                  earliest_start_time=-1000, earliest_end_time=-1000, stationary_process=None):
         """
         This class summarizes the minimal information for a a route leg. It only reflects a complete state
@@ -28,6 +28,7 @@ class VehicleRouteLeg:
         self.rq_dict = rq_dict
         self.destination_pos = destination_pos
         self.power = power
+        self.maintenance_speed = maintenance_speed
         self.earliest_start_time = earliest_start_time
         self.earliest_end_time = earliest_end_time
         self.duration = duration

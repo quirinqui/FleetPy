@@ -513,6 +513,19 @@ class FleetControlBase(metaclass=ABCMeta):
         if assigned_charging_task is not None:
             self._active_charging_processes[assigned_charging_task[0]] = assigned_charging_task[1]
             self._vid_to_assigned_charging_process[veh_obj.vid] = assigned_charging_task[0]
+        if self._vid_to_assigned_maintenance_process.get(veh_obj.vid) is not None:
+            veh_plan_maintenance_task = None
+            for ps in vehicle_plan.list_plan_stops:
+                if ps.get_maintenance_task_id() is not None:
+                    veh_plan_maintenance_task = ps.get_maintenance_task_id()
+            if veh_plan_maintenance_task is None:
+                LOG.warning(f"maintenance task {self._vid_to_assigned_maintenance_process.get(veh_obj.vid)} no longer assigned! -> cancel booking!")
+                assigned_veh_maintenance_task = self._vid_to_assigned_maintenance_process[veh_obj.vid]
+                maintenance_op_id = assigned_veh_maintenance_task[0]
+                if type(maintenance_op_id) == str and maintenance_op_id.startswith("pub"):
+                    self.list_pub_maintenance_infra[maintenance_op_id].cancel_booking(sim_time, self._active_maintenance_processes[assigned_maintenance_task])
+                del self._active_maintenance_processes[self._vid_to_assigned_maintenance_process[veh_obj.vid]]
+                del self._vid_to_assigned_maintenance_process[veh_obj.vid]
         if assigned_maintenance_task is not None:
             self._active_maintenance_processes[assigned_maintenance_task[0]] = assigned_maintenance_task[1]
             self._vid_to_assigned_maintenance_process[veh_obj.vid] = assigned_maintenance_task[0]
@@ -908,6 +921,11 @@ class FleetControlBase(metaclass=ABCMeta):
                 stationary_process = self._active_charging_processes[pstop.get_charging_task_id()]
             else:
                 charging = False
+            if pstop.get_maintenance_speed() > 0:
+                maintenance = True
+                stationary_process = self._active_maintenance_processes[pstop.get_maintenance_task_id()]
+            else:
+                maintenance = False
             #if pstop.get_departure_time(0) > LARGE_INT:
             if pstop.get_state() == G_PLANSTOP_STATES.INACTIVE:
                 inactive = True
@@ -929,6 +947,8 @@ class FleetControlBase(metaclass=ABCMeta):
                     status = VRL_STATES.ROUTE
                 elif charging:
                     status = VRL_STATES.TO_CHARGE
+                elif maintenance:
+                    status = VRL_STATES.TO_MAINTENANCE
                 elif inactive:
                     status = VRL_STATES.TO_DEPOT
                 elif reservation:
@@ -952,6 +972,8 @@ class FleetControlBase(metaclass=ABCMeta):
                 status = VRL_STATES.BOARDING
             elif charging:
                 status = VRL_STATES.CHARGING
+            elif maintenance:
+                status = VRL_STATES.MAINTENANCE
             elif inactive:
                 status = VRL_STATES.OUT_OF_SERVICE
             elif planned_stop:
@@ -975,7 +997,7 @@ class FleetControlBase(metaclass=ABCMeta):
                 else:
                     stop_duration = 0
                 _, c_time = pstop.get_planned_arrival_and_departure_time()
-                list_vrl.append(VehicleRouteLeg(status, pstop.get_pos(), boarding_dict, pstop.get_charging_power(),
+                list_vrl.append(VehicleRouteLeg(status, pstop.get_pos(), boarding_dict, pstop.get_charging_power(), pstop.get_maintenance_speed(),
                                                 duration=stop_duration, earliest_start_time=earliest_start_time, earliest_end_time=departure_time,
                                                 locked=pstop.is_locked(), stationary_process=stationary_process))
         return list_vrl

@@ -106,6 +106,10 @@ class ImmediateDecisionsSimulation(FleetSimulationBase):
         for ch_op_dict in self.charging_operator_dict.values():
             for ch_op in ch_op_dict.values():
                 ch_op.time_trigger(sim_time)
+        # 7)
+        for maintenance_op_dict in self.maintenance_operator_dict.values():
+            for maintenance_op in maintenance_op_dict.values():
+                maintenance_op.time_trigger(sim_time)
         # record at the end of each time step
         self.record_stats()
 

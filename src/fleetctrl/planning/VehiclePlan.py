@@ -334,6 +334,9 @@ class PlanStop(PlanStopBase):
         :return: charging task id (tuple(charging operator id, task id)); None if not present"""
         return self.charging_task_id
 
+    def get_maintenance_task_id(self) -> Tuple[int, str]:
+        return self.maintenance_task_id
+
     def copy(self):
         """ this function returns the copy of a plan stop
         :return: PlanStop copy

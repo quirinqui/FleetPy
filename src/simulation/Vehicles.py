@@ -9,7 +9,7 @@ import typing as tp
 # -----------
 from src.misc.globals import *
 from src.simulation.Legs import VehicleRouteLeg
-from src.simulation.StationaryProcess import ChargingProcess
+from src.simulation.StationaryProcess import ChargingProcess, MaintenanceProcess
 
 LOG = logging.getLogger(__name__)
 
@@ -62,6 +62,7 @@ class SimulationVehicle:
         self.cl_start_time = None
         self.cl_start_pos = None
         self.cl_start_soc = None
+        self.cl_start_cleanliness = None
         self.cl_toll_costs = 0
         self.cl_driven_distance = 0.0
         self.cl_driven_route = []  # list of passed node_indices
@@ -82,6 +83,7 @@ class SimulationVehicle:
         self.cl_start_time = None
         self.cl_start_pos = None
         self.cl_start_soc = None
+        self.cl_start_cleanliness = None
         self.cl_toll_costs = 0
         self.cl_driven_distance = 0.0
         self.cl_driven_route = []  # list of passed node_indices
@@ -184,6 +186,7 @@ class SimulationVehicle:
             self.cl_start_time = simulation_time
             self.cl_start_pos = self.pos
             self.cl_start_soc = self.soc
+            self.cl_driven_distance = self.cleanliness
             self.cl_driven_distance = 0.0
             self.cl_driven_route = []
             ca = self.assigned_route[0]
@@ -274,14 +277,22 @@ class SimulationVehicle:
             record_dict[G_VR_LEG_END_POS] = self.routing_engine.return_position_str(self.pos)
             record_dict[G_VR_LEG_DISTANCE] = self.cl_driven_distance
             record_dict[G_VR_LEG_START_SOC] = self.cl_start_soc
+            record_dict[G_VR_LEG_START_CLEAN] = self.cl_start_cleanliness
             record_dict[G_VR_LEG_END_SOC] = self.soc
+            record_dict[G_VR_LEG_END_CLEAN] = self.cleanliness
             record_dict[G_VR_CHARGING_POWER] = ca.power
+            record_dict[G_VR_MAINTENANCE_SPEED] = ca.power
             if ca.stationary_process is not None and type(ca.stationary_process) == ChargingProcess:
                 station_id = ca.stationary_process.station.id
                 socket_id = ca.stationary_process.socket_id
                 record_dict[G_VR_CHARGING_UNIT] = f"{station_id}-{socket_id}"
+            elif ca.stationary_process is not None and type(ca.stationary_process) == MaintenanceProcess:
+                station_id = ca.stationary_process.station.id
+                spot_id = ca.stationary_process.spot_id
+                record_dict[G_VR_MAINTENANCE_UNIT] = f"{station_id}-{spot_id}"
             else:
                 record_dict[G_VR_CHARGING_UNIT] = ""
+                record_dict[G_VR_MAINTENANCE_UNIT] = ""
             record_dict[G_VR_TOLL] = self.cl_toll_costs
             record_dict[G_VR_OB_RID] = ";".join([str(rq.get_rid_struct()) for rq in self.pax])
             record_dict[G_VR_NR_PAX] = sum([rq.nr_pax for rq in self.pax])
