@@ -15,7 +15,7 @@ class MaintenanceThresholdPublicInfrastructure(MaintenanceBase):
         self.cleanliness_threshold = operator_attributes.get(G_OP_APS_CLEAN, 0.1)
 
     def time_triggered_maintenance_processes(self, sim_time):
-        LOG.debug("Q time triggered maintenance at {}".format(sim_time))
+        LOG.debug("time triggered maintenance at {}".format(sim_time))
 
         for veh_obj in self.fleetctrl.sim_vehicles:
             # do not consider inactive vehicles
@@ -44,7 +44,7 @@ class MaintenanceThresholdPublicInfrastructure(MaintenanceBase):
                                 LOG.debug(" -> but maintenance is already planned")
                                 break
                             if not maintenance_planned:
-                                _, last_time = last_pstop.get_planned_arrival_and_departure_clean()
+                                _, last_time = last_pstop.get_planned_arrival_and_departure_time()
                                 last_pos = last_pstop.get_pos()
                                 is_maintenance_required = True
             elif veh_obj.cleanliness < self.cleanliness_threshold:

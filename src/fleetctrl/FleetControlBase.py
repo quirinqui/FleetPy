@@ -26,6 +26,8 @@ from src.fleetctrl.pricing.DynamicPricingBase import DynamicPrizingBase
 from src.fleetctrl.fleetsizing.DynamicFleetSizingBase import DynamicFleetSizingBase
 from src.fleetctrl.reservation.ReservationBase import ReservationBase
 from src.demand.TravelerModels import RequestBase
+from src.simulation.StationaryProcess import ChargingProcess
+from src.simulation.StationaryProcess import MaintenanceProcess
 
 from src.misc.init_modules import load_repositioning_strategy, load_charging_strategy, \
     load_dynamic_fleet_sizing_strategy, load_dynamic_pricing_strategy, load_reservation_strategy, \
@@ -320,15 +322,27 @@ class FleetControlBase(metaclass=ABCMeta):
             if self._vid_to_assigned_charging_process.get(vid) is not None:
                 finished_charging_task_id = None
                 for vrl in list_finished_VRL:
-                    if vrl.stationary_process is not None:
+                    if vrl.stationary_process is not None and type(vrl.stationary_process) == ChargingProcess:
                         finished_charging_task_id = vrl.stationary_process.id
                         break
                 if finished_charging_task_id is not None:
                     assigned_id = self._vid_to_assigned_charging_process[vid]
                     if assigned_id[1] != finished_charging_task_id:
-                        LOG.warning("inconsitent charging task finished! assigned : {} finished: {}".format(assigned_id, finished_charging_task_id))
+                        LOG.warning("inconsistent charging task finished! assigned : {} finished: {}".format(assigned_id, finished_charging_task_id))
                     del self._active_charging_processes[assigned_id]
                     del self._vid_to_assigned_charging_process[vid]
+            if self._vid_to_assigned_maintenance_process.get(vid) is not None:
+                finished_maintenance_task_id = None
+                for vrl in list_finished_VRL:
+                    if vrl.stationary_process is not None and type(vrl.stationary_process) == MaintenanceProcess:
+                        finished_maintenance_task_id = vrl.stationary_process.id
+                        break
+                if finished_maintenance_task_id is not None:
+                    assigned_id = self._vid_to_assigned_maintenance_process[vid]
+                    if assigned_id[1] != finished_maintenance_task_id:
+                        LOG.warning("inconsistent maintenance task finished! assigned : {} finished: {}".format(assigned_id, finished_maintenance_task_id))
+                    del self._active_maintenance_processes[assigned_id]
+                    del self._vid_to_assigned_maintenance_process[vid]
         upd_utility_val = self.compute_VehiclePlan_utility(simulation_time, veh_obj, self.veh_plans[vid])
         self.veh_plans[vid].set_utility(upd_utility_val)
 

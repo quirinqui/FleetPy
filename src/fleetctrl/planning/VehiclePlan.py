@@ -814,8 +814,12 @@ class VehiclePlan:
                 c_pos = pstop.get_pos()
                 c_time += tt
                 c_soc -= veh_obj.compute_soc_consumption(tdist)
-                if pstop.get_list_alighting_rids() != 0:
-                    c_clean -= 0.1
+                LOG.debug(f"in return_intermediary_plan_state calculating future cleanliness from {c_clean}")
+                alighting_rids = pstop.get_list_alighting_rids()
+                if alighting_rids != []:
+                    c_clean = veh_obj.compute_new_cleanliness(len(alighting_rids))
+                LOG.debug(f"to {c_clean}")
+
             if c_pos == pstop.get_pos():
                 last_c_time = c_time
                 last_c_soc = c_soc
@@ -851,7 +855,7 @@ class VehiclePlan:
 
                 # set maintenance/cleanliness when cleaning
                 if pstop.get_maintenance_speed() > 0:
-                    LOG.debug("QQQQQQQQQQQQQQQQ1 er reinigt scheinbar irgendwann 1?")
+                    LOG.debug("QQ increasing the cleanliness in return_intermediatery_plan_state?")
                     c_clean += veh_obj.compute_cleaning(pstop.get_maintenance_speed(), c_time - last_c_time)
                     c_clean = max(c_clean, 1.0)
                 pstop.set_planned_arrival_and_departure_clean(last_c_clean, c_clean)
@@ -931,6 +935,13 @@ class VehiclePlan:
                     # LOG.debug(" -> charging wrong")
 
                 # TODO Q maintenance mod here?
+                LOG.debug(f"calculating new passengers future c_nr_pax is {c_nr_pax} while c_pax is {c_pax}")
+                LOG.debug(f"calculating future cleanliness from {c_clean}")
+                alighting_rids = pstop.get_list_alighting_rids()
+                LOG.debug(f"with alighting rids {len(alighting_rids)}")
+                if alighting_rids != []:
+                    c_clean = veh_obj.compute_new_cleanliness(len(alighting_rids))
+                LOG.debug(f"to {c_clean}")
 
             if c_pos == pstop_pos:
 
@@ -981,7 +992,7 @@ class VehiclePlan:
                     c_soc = max(c_soc, 1.0)
 
                 if pstop.get_maintenance_speed() > 0:
-                    LOG.debug("QQQQQQQQQQQQQQQQ er reinigt scheinbar irgendwann?")
+                    LOG.debug("QQ increase cleanliness at update_tt_and_check_plan")
                     c_clean += veh_obj.compute_cleaning(pstop.get_maintenance_speed(), c_time - last_c_time)
                     c_clean = max(c_clean, 1.0)
 

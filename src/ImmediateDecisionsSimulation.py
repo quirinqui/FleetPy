@@ -69,7 +69,8 @@ class ImmediateDecisionsSimulation(FleetSimulationBase):
             # 3) sequential processes for each undecided request: request -> offer -> user-decision
             # 4) periodically for waiting requests: run decision process -> possibly leave system (cancellation)
             # 5) periodically operator: call ride pooling optimization, repositioning, charging management
-            # 6) trigger charging infra 
+            # 6) trigger charging infra
+            # 7) trigger maintenance infrastructure
 
         :param sim_time: new simulation time
         :return: None

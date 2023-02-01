@@ -49,7 +49,7 @@ class SimulationVehicle:
         self.battery_size = float(veh_data[G_VTYPE_BATTERY_SIZE])
         self.range = float(veh_data[G_VTYPE_RANGE])
         self.soc_per_m = 1/(self.range*1000)
-        self.passenger_dirtiness = 0
+        self.passenger_dirtyness = 0.333
         # current info
         self.status = VRL_STATES.IDLE
         self.pos = None
@@ -212,7 +212,7 @@ class SimulationVehicle:
                 self._start_next_leg_stationary_object(simulation_time)
             else:
                 # VehicleChargeLeg: check whether duration should be changed (other SOC value or late arrival)
-                if ca.status == VRL_STATES.CHARGING:
+                if ca.status == VRL_STATES.CHARGING or ca.status == VRL_STATES.MAINTENANCE:
                     ca.set_duration_at_start(simulation_time, self)
                 self.cl_remaining_route = []
                 if ca.duration is not None:
@@ -501,9 +501,13 @@ class SimulationVehicle:
         """
         return power * duration / (self.battery_size * 3600)
 
-    def compute_new_cleanliness(self, passenger_dirtyness):
+    def compute_new_cleanliness(self, nr_alighting_passengers):
 
-        self.cleanliness -= passenger_dirtyness
+        return self.cleanliness - (nr_alighting_passengers * self.passenger_dirtyness)
+
+    def set_new_cleanliness(self, cleanliness):
+
+        self.cleanliness = cleanliness
 
     def compute_cleaning(self, maintenance_speed, duration):
         """This method returns the SOC change for charging a certain amount of power for a given duration.

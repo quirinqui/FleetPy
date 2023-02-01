@@ -349,7 +349,6 @@ class FleetSimulationBase:
     def _load_maintenance_modules(self):
         """ Loads necessary modules for maintenance """
         self.maintenance_operator_dict = {"op": {}, "pub": {}}
-        # TODO Q hier habe ich aufgehört
         LOG.debug("load maintenance infra: maintenance op dicts: {}".format(self.list_maintenance_op_dicts))
         if self.dir_names.get(G_DIR_INFRA):
             # operator depots:
@@ -634,7 +633,7 @@ class FleetSimulationBase:
             op_id, vid = opid_vid_tuple
             boarding_requests, alighting_requests, passed_VRL, dict_start_alighting =\
                 veh_obj.update_veh_state(last_time, next_time)
-            if veh_obj.status == VRL_STATES.CHARGING:
+            if veh_obj.status == VRL_STATES.CHARGING or veh_obj.status == VRL_STATES.MAINTENANCE:
                 self.vehicle_update_order[opid_vid_tuple] = 0
             else:
                 self.vehicle_update_order[opid_vid_tuple] = 1
@@ -654,7 +653,7 @@ class FleetSimulationBase:
                 self.operators[op_id].acknowledge_alighting(rid, vid, alighting_end_time)
 
                 # this function call reduces the cleanliness of a vehicle after a successfull alighting process
-                veh_obj.compute_new_cleanliness(0.33)
+                veh_obj.set_new_cleanliness(veh_obj.compute_new_cleanliness(1))
                 LOG.debug(f"New reduced cleanliness computed: {veh_obj.cleanliness}")
 
             # send update to operator

@@ -617,8 +617,8 @@ class PublicMaintenanceInfrastructureOperator:
                         if running_processes.get(spot_id) is None or running_processes.get(spot_id).id != booking_id:
                             LOG.debug("end unrealized booking at time {} at station {} spot {}: {}".format(sim_time, s_id, spot_id, booking_id))
                             try:
-                                ch_process = maintenance_station._booked_processes[booking_id]
-                                maintenance_station.cancel_booking(sim_time, ch_process)
+                                maintenance_process = maintenance_station._booked_processes[booking_id]
+                                maintenance_station.cancel_booking(sim_time, maintenance_process)
                             except KeyError:
                                 LOG.warning("couldn't cancel maintenance booking {}".format(booking_id))
                         
