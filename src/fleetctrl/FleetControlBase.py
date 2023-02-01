@@ -526,6 +526,8 @@ class FleetControlBase(metaclass=ABCMeta):
                 del self._vid_to_assigned_charging_process[veh_obj.vid]
         if assigned_charging_task is not None:
             self._active_charging_processes[assigned_charging_task[0]] = assigned_charging_task[1]
+            LOG.warning(f"Q __vid_to_assigned_charging_process of veh.id {veh_obj.vid} - from {self._vid_to_assigned_charging_process[veh_obj.vid] if veh_obj.vid in self._vid_to_assigned_charging_process else 'Q'} is set to {assigned_charging_task[0]}")
+
             self._vid_to_assigned_charging_process[veh_obj.vid] = assigned_charging_task[0]
         if self._vid_to_assigned_maintenance_process.get(veh_obj.vid) is not None:
             veh_plan_maintenance_task = None
@@ -537,11 +539,12 @@ class FleetControlBase(metaclass=ABCMeta):
                 assigned_veh_maintenance_task = self._vid_to_assigned_maintenance_process[veh_obj.vid]
                 maintenance_op_id = assigned_veh_maintenance_task[0]
                 if type(maintenance_op_id) == str and maintenance_op_id.startswith("pub"):
-                    self.list_pub_maintenance_infra[maintenance_op_id].cancel_booking(sim_time, self._active_maintenance_processes[assigned_maintenance_task])
+                    self.list_pub_maintenance_infra[maintenance_op_id].cancel_booking(sim_time, self._active_maintenance_processes[assigned_veh_maintenance_task])
                 del self._active_maintenance_processes[self._vid_to_assigned_maintenance_process[veh_obj.vid]]
                 del self._vid_to_assigned_maintenance_process[veh_obj.vid]
         if assigned_maintenance_task is not None:
             self._active_maintenance_processes[assigned_maintenance_task[0]] = assigned_maintenance_task[1]
+            LOG.warning(f"Q __vid_to_assigned_maintenance_process of veh.id {veh_obj.vid} - from {self._vid_to_assigned_maintenance_process[veh_obj.vid] if veh_obj.vid in self._vid_to_assigned_maintenance_process else 'Q'} is set to {assigned_maintenance_task[0]}")
             self._vid_to_assigned_maintenance_process[veh_obj.vid] = assigned_maintenance_task[0]
         new_list_vrls = self._build_VRLs(vehicle_plan, veh_obj, sim_time)
         veh_obj.assign_vehicle_plan(new_list_vrls, sim_time, force_ignore_lock=force_assign)

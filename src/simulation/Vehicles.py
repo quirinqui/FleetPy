@@ -49,7 +49,7 @@ class SimulationVehicle:
         self.battery_size = float(veh_data[G_VTYPE_BATTERY_SIZE])
         self.range = float(veh_data[G_VTYPE_RANGE])
         self.soc_per_m = 1/(self.range*1000)
-        self.passenger_dirtyness = 0.333
+        self.passenger_dirtyness = 0.1
         # current info
         self.status = VRL_STATES.IDLE
         self.pos = None

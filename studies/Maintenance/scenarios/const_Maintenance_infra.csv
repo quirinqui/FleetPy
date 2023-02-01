@@ -32,7 +32,7 @@ infra_structure_name,example_infra
 initial_state_scenario,
 
 # Maintenance Related Flags
-op_min_cleanliness_after_planstop,0.5
+op_min_cleanliness_after_planstop,0.1
 op_n_maintenance_station_query,5
 op_n_maintenance_offer_per_station,5
 nr_maintenance_operators,1

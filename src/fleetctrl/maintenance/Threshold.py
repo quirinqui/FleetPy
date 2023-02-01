@@ -43,10 +43,10 @@ class MaintenanceThresholdPublicInfrastructure(MaintenanceBase):
                                 maintenance_planned = True
                                 LOG.debug(" -> but maintenance is already planned")
                                 break
-                            if not maintenance_planned:
-                                _, last_time = last_pstop.get_planned_arrival_and_departure_time()
-                                last_pos = last_pstop.get_pos()
-                                is_maintenance_required = True
+                        if not maintenance_planned:
+                            _, last_time = last_pstop.get_planned_arrival_and_departure_time()
+                            last_pos = last_pstop.get_pos()
+                            is_maintenance_required = True
             elif veh_obj.cleanliness < self.cleanliness_threshold:
                 is_maintenance_required = True
 
