@@ -237,7 +237,7 @@ class ReplayVehicle:
                 status = self.vid_df.loc[self.active_row, G_VR_STATUS]
                 end_pos = self.vid_df.loc[self.active_row, G_VR_LEG_END_POS]
                 # TODO # change status to "idle", "in-service", "charging" instead of "moving"
-                if status in ["route", "reposition", "to_charge", "to_depot"]:
+                if status in ["route", "reposition", "to_charge", "to_depot", "to_maintenance"]:
                     moving = True
                     trajectory_str = self.vid_df.loc[self.active_row, G_VR_REPLAY_ROUTE]
                 else:
