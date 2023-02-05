@@ -1,0 +1,7 @@
+vtype_name_full,custom_long_range_eVehicle_1pers.csv
+maximum_passengers,1
+daily_fix_cost [cent],2500
+per_km_cost [cent],25
+battery_size [kWh],50
+range [km],1000
+source,
