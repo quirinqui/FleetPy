@@ -281,17 +281,18 @@ class SimulationVehicle:
             record_dict[G_VR_LEG_END_SOC] = self.soc
             record_dict[G_VR_LEG_END_CLEAN] = self.cleanliness
             record_dict[G_VR_CHARGING_POWER] = ca.power
-            record_dict[G_VR_MAINTENANCE_SPEED] = ca.power
+            record_dict[G_VR_MAINTENANCE_SPEED] = ca.maintenance_speed
             if ca.stationary_process is not None and type(ca.stationary_process) == ChargingProcess:
                 station_id = ca.stationary_process.station.id
                 socket_id = ca.stationary_process.socket_id
                 record_dict[G_VR_CHARGING_UNIT] = f"{station_id}-{socket_id}"
-            elif ca.stationary_process is not None and type(ca.stationary_process) == MaintenanceProcess:
+            else:
+                record_dict[G_VR_CHARGING_UNIT] = ""
+            if ca.stationary_process is not None and type(ca.stationary_process) == MaintenanceProcess:
                 station_id = ca.stationary_process.station.id
                 spot_id = ca.stationary_process.spot_id
                 record_dict[G_VR_MAINTENANCE_UNIT] = f"{station_id}-{spot_id}"
             else:
-                record_dict[G_VR_CHARGING_UNIT] = ""
                 record_dict[G_VR_MAINTENANCE_UNIT] = ""
             record_dict[G_VR_TOLL] = self.cl_toll_costs
             record_dict[G_VR_OB_RID] = ";".join([str(rq.get_rid_struct()) for rq in self.pax])
@@ -503,14 +504,14 @@ class SimulationVehicle:
 
     def compute_new_cleanliness(self, nr_alighting_passengers):
 
-        return self.cleanliness - (nr_alighting_passengers * self.passenger_dirtyness)
+        return nr_alighting_passengers * self.passenger_dirtyness
 
     def set_new_cleanliness(self, cleanliness):
 
         self.cleanliness = cleanliness
 
     def compute_cleaning(self, maintenance_speed, duration):
-        """This method returns the SOC change for charging a certain amount of power for a given duration.
+        """This method returns the cleanliness change for cleaning with a certain amount of speed for a given duration.
 
         :param maintenance_speed: speed
         :type maintenance_speed: float
@@ -521,7 +522,7 @@ class SimulationVehicle:
         """
 
         #TODO how to compute cleaning
-        return maintenance_speed * duration / (self.battery_size * 3600)
+        return maintenance_speed * duration / 3600
 
     def get_charging_duration(self, power, init_soc, final_soc=1.0):
         """This method computes the charging duration required to charge the vehicle from init_soc to final_soc.

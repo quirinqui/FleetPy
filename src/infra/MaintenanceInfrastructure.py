@@ -28,14 +28,13 @@ from src.misc.config import decode_config_str
 if TYPE_CHECKING:
     from src.routing.NetworkBase import NetworkBase
     from src.simulation.Vehicles import SimulationVehicle
-    from src.fleetctrl.FleetControlBase import FleetControlBase
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # global variables
 # ----------------
 LOG = logging.getLogger(__name__)
 
-MAX_MAINTENANCE_SEARCH = 100   # TODO # in globals?
+MAX_MAINTENANCE_SEARCH = 100
 LARGE_INT = 100000000
 
 class MaintenanceSpot:
@@ -250,7 +249,7 @@ class MaintenanceStation:
 
     def modify_booking(self, sim_time, booking: MaintenanceProcess):
         raise NotImplemented
-    
+
     def get_maintenance_slots(self, sim_time, vehicle, planned_arrival_time, planned_start_cleanliness, desired_end_cleanliness, max_offers_per_station=1):
         """ Returns specific maintenance possibilities for a vehicle at this maintenance station
         a future time, place with estimated cleanliness and desired cleanliness.
@@ -296,7 +295,7 @@ class MaintenanceStation:
             # only keep offer with earliest start
             list_station_offers = sorted(list_station_offers, key=lambda x: x[2])[:max_offers_per_station]
         return list_station_offers
-    
+
     def add_external_booking(self, start_time, end_time, sim_time, veh_struct):
         """ this methods adds an external booking to the maintenance station and therefor occupies a spot for a given time
         :param start_time: start time of booking
@@ -364,106 +363,6 @@ class MaintenanceStation:
     def set_history_file_path(path):
         MaintenanceStation.station_history_file_path = Path(path)
 
-
-# TODO # keep track of parking (inactive) vehicles | query parking lots
-class Depot(MaintenanceStation):
-    """This class represents a maintenance station with parking lots for inactive vehicles."""
-    def __init__(self, station_id, clean_op_id, node, spot_ids, maintenance_speeds: List[float], number_parking_spots):
-        super().__init__(station_id, clean_op_id, node, spot_ids, maintenance_speeds)
-        self.number_parking_spots = number_parking_spots
-        self.deactivated_vehicles: tp.List[SimulationVehicle] = []
-        
-    @property
-    def free_parking_spots(self):
-        return self.number_parking_spots - len(self.deactivated_vehicles)
-    
-    @property
-    def parking_vehicles(self):
-        return len(self.deactivated_vehicles)
-        
-    def schedule_inactive(self, veh_obj):
-        """ adds the vehicle to park at the depot
-        :param veh_obj: vehicle obj"""
-        LOG.debug(f"park vid {veh_obj.vid} in depot {self.id} with parking vids {[x.vid for x in self.deactivated_vehicles]}")
-        self.deactivated_vehicles.append(veh_obj)
-        
-    def schedule_active(self, veh_obj):
-        """ removes the vehicle from the depot
-        :param veh_obj: vehicle obj"""
-        LOG.debug(f"activate vid {veh_obj.vid} in depot {self.id} with parking vids {[x.vid for x in self.deactivated_vehicles]}")
-        self.deactivated_vehicles.remove(veh_obj)
-        
-    def pick_vehicle_to_be_active(self) -> SimulationVehicle:
-        """ selects the vehicle with highest cleanliness from the list of deactivated vehicles (does not activate the vehicle yet!)
-        :return: simulation vehicle obj"""
-        return max([veh for veh in self.deactivated_vehicles if veh.pos == self.pos], key = lambda x:x.cleanliness)
-    
-    def refill_maintenance(self, fleetctrl: FleetControlBase, simulation_time, keep_free_for_short_term=0):
-        """This method fills empty maintenance slots in a depot with the lowest cleanliness parking (status 5) vehicles.
-        The vehicles receive a locked MaintenancePlanStop , which will be followed by another inactive planstop.
-        These will directly be assigned to the vehicle. The maintenance process is directly booked with a spot.
-
-        :param fleetctrl: FleetControl class
-        :param simulation_time: current simulation time
-        :param keep_free_for_short_term: optional parameter in order to keep short-term maintenance capacity (Not implemented yet)
-        :return: None
-        """
-        if keep_free_for_short_term != 0:
-            raise NotImplementedError("keep free for short term is not implemented yet!")
-        # check for vehicles that require maintenance
-        list_consider_maintenance: List[SimulationVehicle] = []
-        for veh_obj in self.deactivated_vehicles:
-            if veh_obj.cleanliness == 1.0 or veh_obj.status != VRL_STATES.OUT_OF_SERVICE:
-                continue
-            # check whether veh_obj already has vcl
-            consider_maintenance = True
-            for vrl in veh_obj.assigned_route:
-                if vrl.status == VRL_STATES.CHARGING:
-                    consider_maintenance = False
-                    break
-            if consider_maintenance:
-                list_consider_maintenance.append(veh_obj)
-        if not list_consider_maintenance:
-            return
-
-        for veh_obj in sorted(list_consider_maintenance, key = lambda x:x.cleanliness):
-            maintenance_options = self.get_maintenance_slots(simulation_time, veh_obj, simulation_time, veh_obj.cleanliness, 1.0)
-            if len(maintenance_options) > 0:
-                selected_maintenance_option = min(maintenance_options, key=lambda x:x[3])
-                ch_process = self.make_booking(simulation_time, selected_maintenance_option[1], veh_obj, start_time=selected_maintenance_option[2], end_time=selected_maintenance_option[3])
-                start_time, end_time = ch_process.get_scheduled_start_end_times()
-                maintenance_task_id = (self.clean_op_id, ch_process.id)
-                ch_ps = MaintenancePlanStop(self.pos, maintenance_task_id=maintenance_task_id, earliest_start_time=start_time, duration=end_time-start_time,
-                                         maintenance_speed=selected_maintenance_option[5], locked=True)
-                
-                assert fleetctrl.veh_plans[veh_obj.vid].list_plan_stops[-1].get_state() == G_PLANSTOP_STATES.INACTIVE
-                if start_time == simulation_time:
-                    LOG.debug(" -> start now")
-                    # finish current status 5 task
-                    veh_obj.end_current_leg(simulation_time)
-                    # modify veh-plan: insert maintenance before list position -1
-                    fleetctrl.veh_plans[veh_obj.vid].add_plan_stop(ch_ps, veh_obj, simulation_time,
-                                                                    fleetctrl.routing_engine,
-                                                                    return_copy=False, position=-1)
-                    fleetctrl.lock_current_vehicle_plan(veh_obj.vid)
-                    # assign vehicle plan
-                    fleetctrl.assign_vehicle_plan(veh_obj, fleetctrl.veh_plans[veh_obj.vid], simulation_time, assigned_maintenance_task=(maintenance_task_id, ch_process))
-                else:
-                    LOG.debug(" -> start later")
-                    # modify veh-plan:
-                    # finish current inactive task
-                    _, inactive_vrl = veh_obj.end_current_leg(simulation_time)
-                    fleetctrl.receive_status_update(veh_obj.vid, simulation_time, [inactive_vrl])
-                    # add new inactivate task with corresponding duration
-                    inactive_ps_1 = RoutingTargetPlanStop(self.pos, locked=True, duration=start_time - simulation_time, planstop_state=G_PLANSTOP_STATES.INACTIVE)
-                    # add inactivate task after maintenance
-                    inactive_ps_2 = RoutingTargetPlanStop(self.pos, locked=True, duration=LARGE_INT, planstop_state=G_PLANSTOP_STATES.INACTIVE)
-                    # new veh plan
-                    new_veh_plan = VehiclePlan(veh_obj, simulation_time, fleetctrl.routing_engine, [inactive_ps_1, ch_ps, inactive_ps_2])
-                    
-                    fleetctrl.lock_current_vehicle_plan(veh_obj.vid)
-                    # assign vehicle plan
-                    fleetctrl.assign_vehicle_plan(veh_obj, new_veh_plan, simulation_time, assigned_maintenance_task=(maintenance_task_id, ch_process))
 
 class PublicMaintenanceInfrastructureOperator:
 
@@ -629,67 +528,3 @@ class PublicMaintenanceInfrastructureOperator:
         t = time.time()
         self._remove_unrealized_bookings(sim_time)
         LOG.debug("maintenance infra time trigger took {}".format(time.time() - t))
-    
-
-class OperatorMaintenanceAndDepotInfrastructure(PublicMaintenanceInfrastructureOperator):
-    """ this class has similar functionality like a MaintenanceInfrastructureOperator but is unique for each MoD operator (only the corresponding operator
-    has access to the maintenance stations """
-    # TODO # functionality for parking lots here | functionality for activating/deactivating in fleetctrl/fleetsizing
-    # TODO # functionality for depot maintenance in fleetctrl/maintenance
-    def __init__(self, op_id: int, depot_file: str, operator_attributes: dict,
-                 scenario_parameters: dict, dir_names: dict, routing_engine: NetworkBase):
-        """This class represents the operator for the maintenance infrastructure.
-
-        :param op_id: id of mod operator this depot class belongs to
-        :param depot_file: path to file where maintenance stations an depots are loaded from
-        :param operator_attributes: dictionary that can contain additionally required parameters (parameter specific for the mod operator)
-        :param scenario_parameters: dictionary that contain global scenario parameters
-        :param dir_names: dictionary that specifies the folder structure of the simulation
-        :param routing_engine: reference to network class
-        """
-        super().__init__(f"op_{op_id}", depot_file, operator_attributes, scenario_parameters, dir_names, routing_engine)
-        self.depot_by_id: tp.Dict[int, Depot] = {depot_id : depot for depot_id, depot in self.station_by_id.items() if depot.number_parking_spots > 0}
-        
-    def _loading_maintenance_stations(self, depot_file, dir_names) -> List[Depot]:
-        """ Loads the maintenance stations from the provided csv file"""
-        stations_df = pd.read_csv(depot_file)
-        file = Path(dir_names[G_DIR_OUTPUT]).joinpath("5_maintenance_stats.csv")
-        if file.exists():
-            file.unlink()
-        MaintenanceStation.set_history_file_path(file)
-        stations = []
-        for _, row in stations_df.iterrows():
-            station_id = row[G_INFRA_MS_ID]
-            node_index = row[G_NODE_ID]
-            cunit_dict = decode_config_str(row[G_INFRA_MU_DEF])
-            number_parking_spots = row[G_INFRA_MAX_PARK]
-            if cunit_dict is None:
-                cunit_dict = {}
-            spot_ids = [i for i in range(sum(cunit_dict.values()))]
-            spot_maintenance_speeds = []
-            for maintenance_speed, number in cunit_dict.items():
-                spot_maintenance_speeds += [maintenance_speed for _ in range(number)]
-            stations.append(Depot(station_id, self.clean_op_id, node_index, spot_ids, spot_maintenance_speeds, number_parking_spots))
-        return stations
-    
-    def find_nearest_free_depot(self, pos, check_free=True) -> Depot:
-        """This method can be used to send a vehicle to the next depot.
-
-        :param pos: final vehicle position
-        :param check_free: if set to False, the check for free parking is ignored
-        :return: Depot
-        """
-        free_depot_positions = {}
-        for depot in self.depot_by_id.values():
-            if depot.free_parking_spots > 0 or not check_free:
-                free_depot_positions[depot.pos] = depot
-        re_list = self.routing_engine.return_travel_costs_1toX(pos, free_depot_positions.keys(), max_routes=1)
-        if re_list:
-            destination_pos = re_list[0][0]
-            depot = free_depot_positions[destination_pos]
-        else:
-            depot = None
-        return depot
-    
-    def time_trigger(self, sim_time):
-        super().time_trigger(sim_time)

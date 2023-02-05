@@ -6,7 +6,7 @@ from typing import Dict, List, Any, Tuple, TYPE_CHECKING
 from src.misc.globals import G_OP_CLEAN_N_OFFER_P_ST_QUERY, G_OP_CLEAN_N_STATION_QUERY
 
 if TYPE_CHECKING:
-    from src.infra.MaintenanceInfrastructure import OperatorMaintenanceAndDepotInfrastructure, PublicMaintenanceInfrastructureOperator
+    from src.infra.MaintenanceInfrastructure import PublicMaintenanceInfrastructureOperator
     from src.fleetctrl.FleetControlBase import FleetControlBase
 
 LOG = logging.getLogger(__name__)

@@ -348,19 +348,9 @@ class FleetSimulationBase:
 
     def _load_maintenance_modules(self):
         """ Loads necessary modules for maintenance """
-        self.maintenance_operator_dict = {"op": {}, "pub": {}}
+        self.maintenance_operator_dict = {"pub": {}}
         LOG.debug("load maintenance infra: maintenance op dicts: {}".format(self.list_maintenance_op_dicts))
         if self.dir_names.get(G_DIR_INFRA):
-            # operator depots:
-            from src.infra.MaintenanceInfrastructure import OperatorMaintenanceAndDepotInfrastructure
-            for op_id, op_dict in enumerate(self.list_op_dicts):
-                depot_f_name = op_dict.get(G_OP_DEPOT_F)
-                if depot_f_name is not None:
-                    depot_f = os.path.join(self.dir_names[G_DIR_INFRA], depot_f_name)
-                    op_clean = OperatorMaintenanceAndDepotInfrastructure(op_id, depot_f, op_dict,
-                                                                       self.scenario_parameters, self.dir_names,
-                                                                       self.routing_engine)
-                    self.maintenance_operator_dict["op"][op_id] = op_clean
 
             # public maintenance
             if len(self.list_maintenance_op_dicts) > 0:
@@ -653,8 +643,9 @@ class FleetSimulationBase:
                 self.operators[op_id].acknowledge_alighting(rid, vid, alighting_end_time)
 
                 # this function call reduces the cleanliness of a vehicle after a successfull alighting process
-                veh_obj.set_new_cleanliness(veh_obj.compute_new_cleanliness(1))
-                LOG.debug(f"New reduced cleanliness computed: {veh_obj.cleanliness}")
+                if self.n_clean_op > 0:
+                    veh_obj.set_new_cleanliness(veh_obj.cleanliness - veh_obj.compute_new_cleanliness(1))
+                    LOG.debug(f"New reduced cleanliness computed: {veh_obj.cleanliness}")
 
             # send update to operator
             if len(boarding_requests) > 0 or len(dict_start_alighting) > 0:

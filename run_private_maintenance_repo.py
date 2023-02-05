@@ -94,6 +94,14 @@ def run_scenarios(constant_config_file, scenario_file, n_parallel_sim=1, n_cpu_p
                     traceback.print_exc()
             else:
                 run_single_simulation(scenario_cfg)
+                ##run_single_simulation(scenario_cfg)
+                #for i in range(1, 20):
+                #    scenario_cfg['op_fleet_composition'] = {'custom_short_range_eVehicle_1pers': i}
+                #    print(f"number of vehicles {i}")
+                #    try:
+                #        run_single_simulation(scenario_cfg)
+                #    except:
+                #        traceback.print_exc()
     else:
         if n_cpu_per_sim == 1:
             mp_pool = mp.Pool(n_parallel_sim)
